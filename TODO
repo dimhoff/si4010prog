@@ -1,0 +1,12 @@
+generic:
+ - Better handling of running/debug state, to prevent the bus to become broken when issuing a wrong combination of commands.
+ - test function that checks if bus works and requests/checks the device product ID's
+ - NVRAM programming
+
+breakpoints:
+ - Detect breakpoint triggering
+ - Wait for breakpoint
+
+bus:
+ - GPIO based bus master as replacement for deprecated LPT port
+ - Fix LPT based bus master(c2drv) to work with modern kernel
