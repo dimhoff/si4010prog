@@ -52,7 +52,7 @@ void uout_flush() {
 }
 
 void uout_write_byte(unsigned char b) {
-	xdata unsigned char *dest = EP6FIFOBUF;
+	__xdata unsigned char *dest = EP6FIFOBUF;
 
 	// If full, wait...
 	while ((EP2468STAT & 0x20)) { 
