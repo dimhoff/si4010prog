@@ -1,5 +1,5 @@
 /**
- * c2_hw.h - C2 Master bus interface functions
+ * c2_bus_module.h - Things needed to write C2 Bus master modules
  *
  * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
  * All rights reserved.
@@ -26,20 +26,37 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __C2_HW_H__
-#define __C2_HW_H__
 
-#include <stdlib.h>
+#ifndef __C2_BUS_MODULE_H__
+#define __C2_BUS_MODULE_H__
 
-typedef struct c2_hw_data c2_hw_t;
+/**
+ * Structure containing pointers to the implementations
+ *
+ * This structure contains pointers to the functions that implement the various
+ * bus action for the underlying bus hardware type.
+ */
+struct c2_bus_ops {
+	int (*reset) (struct c2_bus *bus);
+	int (*qreset) (struct c2_bus *bus);
+	int (*addr_read) (struct c2_bus *bus, unsigned char *addr);
+	int (*addr_write) (struct c2_bus *bus, unsigned char addr);
+	int (*data_read) (struct c2_bus *bus, unsigned char *data, size_t len);
+	int (*data_write) (struct c2_bus *bus, const unsigned char *data, size_t len);
+	void (*destruct) (struct c2_bus *bus);
+};
 
-c2_hw_t *c2_hw_create(const char *path);
-int c2_hw_reset(c2_hw_t *hw);
-int c2_hw_qreset(c2_hw_t *hw);
-int c2_hw_read_addr(c2_hw_t *hw, unsigned char *addr);
-int c2_hw_write_addr(c2_hw_t *hw, unsigned char addr);
-int c2_hw_data_read(c2_hw_t *hw, unsigned char *data, size_t len);
-int c2_hw_data_write(c2_hw_t *hw, const unsigned char *data, size_t len);
-void c2_hw_destroy(c2_hw_t *hw);
+/**
+ * Set error message in C2 bus context
+ */
+void c2_bus_set_error(struct c2_bus *bus, const char *msg);
+ 
+/**
+ * Set error message + system error in C2 bus context
+ *
+ * Set the C2 Bus context error message to the given error and automatically
+ * append a system error based on the current value of errno.
+ */
+void c2_bus_set_error(struct c2_bus *bus, const char *msg);
 
-#endif // __C2_HW_H__
+#endif // __C2_BUS_MODULE_H__

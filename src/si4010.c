@@ -28,7 +28,7 @@
 #include <linux/types.h>
 #include <time.h>
 #include <assert.h>
-#include "c2_hw.h"
+#include "c2_bus.h"
 
 // Mostly undocumented registers useful for flashing & debugging
 // To access 0x00-0x02, I've only used C2_ReadReg & C2_WriteReg.
@@ -94,7 +94,7 @@
 // timeout using time() is 1-2 seconds, which is good enough.
 #define POLL_TIMEOUT 2    // 2 = at most 2 seconds, and as little as 1 second
 
-static c2_hw_t *driver_handle = NULL;  // handle to the c2 bus driver
+static struct c2_bus *c2_bus_handle = NULL;  // handle to the c2 bus driver
 //TODO: use some kind of state object instead of global...
 
 //TODO: make things static?
@@ -102,25 +102,25 @@ static c2_hw_t *driver_handle = NULL;  // handle to the c2 bus driver
 static inline uint8_t C2_ReadData(void)
 {
   unsigned char tmp;
-  c2_hw_data_read(driver_handle, &tmp, 1);
+  c2_bus_data_read(c2_bus_handle, &tmp, 1);
   return (uint8_t)tmp;
 }
 
 static inline void C2_WriteData(uint8_t dat)
 {
-  c2_hw_data_write(driver_handle, &dat, 1);
+  c2_bus_data_write(c2_bus_handle, &dat, 1);
 }
 
 static inline uint8_t C2_ReadAddr(void)
 {
   unsigned char tmp;
-  c2_hw_read_addr(driver_handle, &tmp);
+  c2_bus_addr_read(c2_bus_handle, &tmp);
   return (uint8_t)tmp;
 }
 
 static inline void C2_WriteAddr(uint8_t addr)
 {
-  c2_hw_write_addr(driver_handle, addr);
+  c2_bus_addr_write(c2_bus_handle, addr);
 }
 
 static inline uint8_t C2_ReadReg(uint8_t reg)
@@ -157,15 +157,9 @@ static inline void WaitForInReady(void)
 
 //*********************************************************************
 
-int si4010_init()
+int si4010_init(struct c2_bus *bus)
 {
-	if (driver_handle == NULL) {
-		driver_handle = c2_hw_create(NULL);
-		if (driver_handle == NULL) {
-			perror("c2_hw_create()");
-			return 1;
-		}
-	}
+	c2_bus_handle = bus;
 	return 0;
 }
 
@@ -180,13 +174,13 @@ uint16_t c2_get_chip_version()
 /*
 int si4010_reset()
 {
-	return c2_hw_reset(driver_handle); // reset target device
+	return c2_bus_reset(c2_bus_handle); // reset target device
 }
 */
 
 int si4010_halt()
 {
-	return c2_hw_qreset(driver_handle);
+	return c2_bus_qreset(c2_bus_handle);
 }
 
 int si4010_resume()
@@ -201,7 +195,7 @@ int si4010_bp_set(uint8_t bpid, uint16_t addr)
 	uint8_t buf[2];
 
 	if (bpid > 7) {
-		return 1;
+		return -1;
 	}
 
 	buf[0] = bpid;
@@ -231,7 +225,7 @@ int si4010_bp_clear(uint8_t bpid)
 	uint8_t bp_en;
 
 	if (bpid > 7) {
-		return 1;
+		return -1;
 	}
 
 	err = si4010_sfr_read(BP_EN, 1, &bp_en);
@@ -309,7 +303,7 @@ int si4010_sfr_read(uint8_t addr, uint8_t len, void *buf)
 	// Check status before starting register access sequence
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 
 	C2_WriteData(addr); WaitForInReady();
@@ -333,7 +327,7 @@ int si4010_sfr_write(uint8_t addr, uint8_t len, const void *buf)
 	// Check status before starting register access sequence
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 
 	C2_WriteData(addr); WaitForInReady();
@@ -357,7 +351,7 @@ int si4010_ram_read(uint8_t addr, uint8_t len, void *buf)
 	// Check status before starting RAM access sequence
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 
 	C2_WriteData(addr); WaitForInReady();
@@ -381,7 +375,7 @@ int si4010_ram_write(uint8_t addr, uint8_t len, const void *buf)
 	// Check status before starting RAM access sequence
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 
 	C2_WriteData(addr); WaitForInReady();
@@ -405,7 +399,7 @@ int si4010_xram_read(uint16_t addr, size_t len, void *buf)
 	// Check status before starting Flash access sequence
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 
 	C2_WriteData(addr >> 8); WaitForInReady();
@@ -431,7 +425,7 @@ int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf)
 	// Check status before starting Flash access sequence
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 
 	C2_WriteData(addr >> 8); WaitForInReady();
@@ -447,7 +441,7 @@ int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf)
 	// Check status before writing Flash block
 	WaitForOutReady();
 	if (C2_ReadData() != COMMAND_OK) {
-		return 1;
+		return -1;
 	}
 	return 0;
 }
@@ -456,17 +450,9 @@ int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf)
 int si4010_reset()
 {
 	struct timespec tspec;
+	int err;
 
-	//TODO: this is already done by si4010_init()
-	if (driver_handle == NULL) {
-		driver_handle = c2_hw_create(NULL);
-		if (driver_handle == NULL) {
-			perror("c2_hw_create()");
-			return 1;
-		}
-	}
-
-	c2_hw_reset(driver_handle); // reset target device
+	c2_bus_reset(c2_bus_handle); // reset target device
 
 	tspec.tv_sec = 0;
 	tspec.tv_nsec = 2000L;

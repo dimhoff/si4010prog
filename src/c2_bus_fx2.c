@@ -1,5 +1,5 @@
 /**
- * c2_hw_fx2.c - EZ-USB FX2 based SiLabs C2 programmer controll functions
+ * c2_bus_fx2.c - EZ-USB FX2 based SiLabs C2 programmer control functions
  *
  * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
  * All rights reserved.
@@ -26,11 +26,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "c2_hw.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <usb.h>
+
+#include "c2_bus.h"
+#include "c2_bus_module.h"
 
 #define VID 0x04b4
 #define PID 0x8613
@@ -51,17 +53,35 @@ enum CmdOpcodes {
         CmdWriteData 
 };
 
-struct c2_hw_data {
+struct c2_bus_fx2_ctx {
 	usb_dev_handle *dev;
 };
 
-struct usb_device * locate_fx2(const char *path)
+int c2_fx2_reset(struct c2_bus *bus);
+int c2_fx2_qreset(struct c2_bus *bus);
+int c2_fx2_addr_read(struct c2_bus *bus, unsigned char *addr);
+int c2_fx2_addr_write(struct c2_bus *bus, unsigned char addr);
+int c2_fx2_data_read(struct c2_bus *bus, unsigned char *data, size_t len);
+int c2_fx2_data_write(struct c2_bus *bus,
+			const unsigned char *data, size_t len);
+void c2_fx2_destroy(struct c2_bus *bus);
+
+struct c2_bus_ops c2_bus_fx2_ops = {
+	.reset = c2_fx2_reset,
+	.qreset = c2_fx2_qreset,
+	.addr_read = c2_fx2_addr_read,
+	.addr_write = c2_fx2_addr_write,
+	.data_read = c2_fx2_data_read,
+	.data_write = c2_fx2_data_write,
+	.destruct = c2_fx2_destroy,
+};
+
+static struct usb_device * locate_fx2(const char *path)
 {
 	struct usb_bus *bus;
 	struct usb_device *dev;
 
-	if (path != NULL && strlen(path) != 7) {
-		errno = EINVAL;
+	if (path != NULL && !(strlen(path) == 7 || path[0] == '\0')) {
 		return NULL;
 	}
 
@@ -71,7 +91,7 @@ struct usb_device * locate_fx2(const char *path)
 
 	for (bus = usb_get_busses(); bus; bus = bus->next) {
 		for (dev = bus->devices; dev; dev = dev->next) {
-			if (path != NULL) {
+			if (path != NULL && path[0] != '\0') {
 				if ((strncmp(path, bus->dirname, 3) == 0) &&
 				    (strncmp(path+4, dev->filename, 3) == 0))
 				{
@@ -86,18 +106,18 @@ struct usb_device * locate_fx2(const char *path)
 		}
 	}
 
-	errno = ENXIO;
 	return NULL;
 }
 
-c2_hw_t *c2_hw_create(const char *path)
+int c2_bus_fx2_init(struct c2_bus *bus, const char *path)
 {
 	struct usb_device *device;
-	c2_hw_t *hw;
+	struct c2_bus_fx2_ctx *hw;
 
-	hw = (c2_hw_t *) malloc(sizeof(c2_hw_t));
+	hw = (struct c2_bus_fx2_ctx *) malloc(sizeof(struct c2_bus_fx2_ctx));
 	if (hw == NULL) {
-		return NULL;
+		c2_bus_set_error(bus, "Unable to allocate memory");
+		return -1;
 	}
 
 	usb_init();
@@ -105,90 +125,101 @@ c2_hw_t *c2_hw_create(const char *path)
 
 	// find device, reset device and open device handle
 	if ((device = locate_fx2(path)) == NULL) {
-		perror("Could not locate the fx2 device");
+		c2_bus_set_perror(bus, "Could not locate the fx2 device");
 		goto bad1;
 	}
 	hw->dev = usb_open(device);
 
 	if ((usb_claim_interface(hw->dev, IFNUM)) != 0) {
-		perror("claim_interface");
+		c2_bus_set_perror(bus, "claim_interface");
 		goto bad2;
 	}
 
 	if ((usb_set_altinterface(hw->dev, ALTIFNUM)) != 0) {
-		perror("set_altinterface");
+		c2_bus_set_perror(bus, "set_altinterface");
 		goto bad2;
 	}
 
-	return hw;
+	bus->ops = &c2_bus_fx2_ops;
+	bus->ctx = hw;
+	return 0;
 
 bad2:
 	usb_close(hw->dev);
 bad1:
 	free(hw);
-	return NULL;
+	return -1;
 }
 
-int c2_hw_reset(c2_hw_t *hw)
+int c2_fx2_reset(struct c2_bus *bus)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
 	int read_len;
 	unsigned char buf[3] = { '<', 1, CmdReset };
 
 	if (usb_bulk_write(hw->dev, CMD_OUT, (char *) buf, sizeof(buf), USB_TIMEOUT) != sizeof(buf)) {
+		c2_bus_set_error(bus, "Unable to write to USB device");
 		return -1;
 	}
 
 	read_len = usb_bulk_read(hw->dev, CMD_IN, (char *) buf, sizeof(buf), USB_TIMEOUT);
 	if (read_len < 0) {
+		c2_bus_set_error(bus, "Unable to read from USB device");
 		return -1;
 	}
 
 	if (read_len != 2 || buf[0] != '>' || buf[1] != 0) {
-		errno = EBADMSG;
+		c2_bus_set_error(bus, "Unexpected response from USB device");
 		return -1;
 	}
 
 	return 0;
 }
 
-int c2_hw_qreset(c2_hw_t *hw)
+int c2_fx2_qreset(struct c2_bus *bus)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
 	int read_len;
 	unsigned char buf[3] = { '<', 1, CmdQReset };
 
 	if (usb_bulk_write(hw->dev, CMD_OUT, (char *) buf, sizeof(buf), USB_TIMEOUT) != sizeof(buf)) {
+		c2_bus_set_error(bus, "Unable to write to USB device");
 		return -1;
 	}
 
 	read_len = usb_bulk_read(hw->dev, CMD_IN, (char *) buf, sizeof(buf), USB_TIMEOUT);
 	if (read_len < 0) {
+		c2_bus_set_error(bus, "Unable to read from USB device");
 		return -1;
 	}
 
 	if (read_len != 2 || buf[0] != '>' || buf[1] != 0) {
-		errno = EBADMSG;
+		c2_bus_set_error(bus, "Unexpected response from USB device");
 		return -1;
 	}
 
 	return 0;
 }
 
-int c2_hw_read_addr(c2_hw_t *hw, unsigned char *addr)
+int c2_fx2_addr_read(struct c2_bus *bus, unsigned char *addr)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
 	int read_len;
 	unsigned char buf[3] = { '<', 1, CmdReadAddr };
 
 	if (usb_bulk_write(hw->dev, CMD_OUT, (char *) buf, sizeof(buf), USB_TIMEOUT) != sizeof(buf)) {
+		c2_bus_set_error(bus, "Unable to write to USB device");
 		return -1;
 	}
 
 	read_len = usb_bulk_read(hw->dev, CMD_IN, (char *) buf, sizeof(buf), USB_TIMEOUT);
 	if (read_len < 0) {
+		c2_bus_set_error(bus, "Unable to read from USB device");
 		return -1;
 	}
 
 	if (read_len != 3 || buf[0] != '>' || buf[1] != 1) {
-		errno = EBADMSG;
+		c2_bus_set_error(bus, "Unexpected response from USB device");
 		return -1;
 	}
 
@@ -197,53 +228,59 @@ int c2_hw_read_addr(c2_hw_t *hw, unsigned char *addr)
 	return 0;
 }
 
-int c2_hw_write_addr(c2_hw_t *hw, unsigned char addr)
+int c2_fx2_addr_write(struct c2_bus *bus, unsigned char addr)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
 	int read_len;
 	unsigned char buf[4] = { '<', 2, CmdWriteAddr, 0 };
 
 	buf[3] = addr;
 
 	if (usb_bulk_write(hw->dev, CMD_OUT, (char *) buf, sizeof(buf), USB_TIMEOUT) != sizeof(buf)) {
+		c2_bus_set_error(bus, "Unable to write to USB device");
 		return -1;
 	}
 
 	read_len = usb_bulk_read(hw->dev, CMD_IN, (char *) buf, sizeof(buf), USB_TIMEOUT);
 	if (read_len < 0) {
+		c2_bus_set_error(bus, "Unable to read from USB device");
 		return -1;
 	}
 
 	if (read_len != 2 || buf[0] != '>' || buf[1] != 0) {
-		errno = EBADMSG;
+		c2_bus_set_error(bus, "Unexpected response from USB device");
 		return -1;
 	}
 
 	return 0;
 }
 
-int c2_hw_data_read(c2_hw_t *hw, unsigned char *data, size_t len)
+int c2_fx2_data_read(struct c2_bus *bus, unsigned char *data, size_t len)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
 	int read_len;
 	unsigned char buf[6] = { '<', 2, CmdReadData, 0 };
 
 	if (len < 1 || len > 4) {
-		errno = EINVAL;
+		c2_bus_set_error(bus, "C2 Data Write length out of range");
 		return -1;
 	}
 
 	buf[3] = len;
 
 	if (usb_bulk_write(hw->dev, CMD_OUT, (char *) buf, 4, USB_TIMEOUT) != 4) {
+		c2_bus_set_error(bus, "Unable to write to USB device");
 		return -1;
 	}
 
 	read_len = usb_bulk_read(hw->dev, CMD_IN, (char *) buf, sizeof(buf), USB_TIMEOUT);
 	if (read_len < 0) {
+		c2_bus_set_error(bus, "Unable to read from USB device");
 		return -1;
 	}
 
 	if (read_len != 3 || buf[0] != '>' || buf[1] != len) {
-		errno = EBADMSG;
+		c2_bus_set_error(bus, "Unexpected response from USB device");
 		return -1;
 	}
 
@@ -252,13 +289,14 @@ int c2_hw_data_read(c2_hw_t *hw, unsigned char *data, size_t len)
 	return 0;
 }
 
-int c2_hw_data_write(c2_hw_t *hw, const unsigned char *data, size_t len)
+int c2_fx2_data_write(struct c2_bus *bus, const unsigned char *data, size_t len)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
 	int read_len;
 	unsigned char buf[7] = { '<', 0, CmdWriteData, 0 };
 
 	if (len < 1 || len > 4) {
-		errno = EINVAL;
+		c2_bus_set_error(bus, "C2 Data Write length out of range");
 		return -1;
 	}
 
@@ -266,28 +304,35 @@ int c2_hw_data_write(c2_hw_t *hw, const unsigned char *data, size_t len)
 	memcpy(&buf[3], data, len);
 
 	if (usb_bulk_write(hw->dev, CMD_OUT, (char *) buf, 3 + len, USB_TIMEOUT) != 3 + len) {
+		c2_bus_set_error(bus, "Unable to write to USB device");
 		return -1;
 	}
 
 	read_len = usb_bulk_read(hw->dev, CMD_IN, (char *) buf, sizeof(buf), USB_TIMEOUT);
 	if (read_len < 0) {
+		c2_bus_set_error(bus, "Unable to read from USB device");
 		return -1;
 	}
 
 	if (read_len != 2 || buf[0] != '>' || buf[1] != 0) {
-		errno = EBADMSG;
+		c2_bus_set_error(bus, "Unexpected response from USB device");
 		return -1;
 	}
 
 	return 0;
 }
 
-void c2_hw_destroy(c2_hw_t *hw)
+void c2_fx2_destroy(struct c2_bus *bus)
 {
+	struct c2_bus_fx2_ctx *hw = (struct c2_bus_fx2_ctx *) bus->ctx;
+
 	if (hw == NULL) return;
 
 	if (hw->dev != NULL) {
 		usb_close(hw->dev);
 	}
 	free(hw);
+
+	bus->ops = NULL;
+	bus->ctx = NULL;
 }

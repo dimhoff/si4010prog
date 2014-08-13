@@ -24,7 +24,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-int si4010_init();
+#include "c2_bus.h"
+
+int si4010_init(struct c2_bus *bus);
 uint16_t c2_get_chip_version();
 int si4010_reset();
 int si4010_halt();

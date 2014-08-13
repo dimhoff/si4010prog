@@ -1,12 +1,13 @@
 LDFLAGS=-lusb
-C2_BUS_DRV=c2_hw_fx2
+C2_BUS_DRV=c2_bus_fx2.o c2_bus_c2drv.o
+CFLAGS+= -I../drivers/c2_lpt
 
 all: si4010prog ec2_emul
 
-si4010prog: main.o si4010.o $(C2_BUS_DRV).o dehexify.o
+si4010prog: main.o si4010.o c2_bus.o $(C2_BUS_DRV) dehexify.o
 	$(CC) $(CFLAGS) -o si4010prog $^ $(LDFLAGS)
 
-ec2_emul: ec2_emul.o si4010.o $(C2_BUS_DRV).o ec2_cksum.o
+ec2_emul: ec2_emul.o si4010.o c2_bus.o $(C2_BUS_DRV) ec2_cksum.o
 	$(CC) $(CFLAGS) -o ec2_emul $^ $(LDFLAGS)
 
 clean:

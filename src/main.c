@@ -41,7 +41,7 @@ void usage(const char *name)
 		"Options:\n"
 		"  -h             Print this help message\n"
 		"  -b             Use binary output when dumping data\n"
-		"  -d <uri>       Programmer device to use\n"
+		"  -d <uri>       Programmer device to use. Use 'help' for help.\n"
 		"  -q             Quiet\n"
 		"Commands:\n"
 		"  identify       Get Device ID and Revision ID\n"
@@ -73,6 +73,28 @@ void usage(const char *name)
 		"      halted. If MCU is not halted when running or vice versa the protocol will\n"
 		"      break and can only be recovered with a reset.\n"
 		, VERSION, name);
+}
+
+void usage_dev_uri()
+{
+	printf( "To specify a type and location of the C2 bus hardware interface a universal\n"
+		"resource identifier is used.\n"
+		"The URI format is: '<interface type>://<interface specific path>'\n"
+		"Below is a list of valid interface type names with a description.\n"
+		"\n"
+		"- c2drv\n"
+		"  This interface uses a standard LPT printer port and the c2drv Linux kernel\n"
+		"  module. The path specifies the device file of the kernel module.\n"
+		"- fx2\n"
+		"  Cypress EZ-USB FX2 based bus interface. This interface requires a special\n"
+		"  firmware to be loaded into the device. If no path is specified the first FX2\n"
+		"  device found is used. To use a specific USB device the path must be in the\n"
+		"  format 'fx2://BBB/DDD', where 'BBB' is a 3 digit bus number and 'DDD' is the 3\n"
+		"  digit device number as can be obtained with lsusb.\n"
+		"- ft232\n"
+		"  FTDI FT232R based bus interface. PATH FORMAT TBD...\n"
+		);
+//TODO:
 }
 
 static void *CheckMalloc(void *ptr)
@@ -254,11 +276,32 @@ int ProgramIHexFile(const char *path)
 int main(int argc, char *argv[])
 {
 	int opt;
+	char *c2_bus_type = "fx2";
+	char *c2_bus_path = "";
+
 	int errors = 0;
 	bool ignore_errors = false;
+	struct c2_bus c2_bus_handle;
 
-	while ((opt = getopt(argc, argv, "h")) != -1) {
+	while ((opt = getopt(argc, argv, "d:h")) != -1) {
 		switch (opt) {
+		case 'd':
+			c2_bus_type = optarg;
+			if (strcmp(c2_bus_type, "help") == 0) {
+				usage_dev_uri();
+				exit(EXIT_SUCCESS);
+			} else {
+				char *sep;
+				sep = strstr(c2_bus_type, "://");
+				if (sep == NULL) {
+					fprintf(stderr, "C2 bus device uri "
+							"incorrect format\n");
+					exit(EXIT_FAILURE);
+				}
+				*sep = '\0';
+				c2_bus_path = sep + 3;
+			}
+			break;
 		case 'h':
 			usage(argv[0]);
 			exit(EXIT_SUCCESS);
@@ -275,8 +318,16 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	// Open device
-	if (si4010_init() != 0) {
+	// Open C2 bus device
+	if (c2_bus_open(&c2_bus_handle, c2_bus_type, c2_bus_path) != 0) {
+		fprintf(stderr, "Failed to open C2 bus: %s\n",
+					c2_bus_get_error(&c2_bus_handle));
+		c2_bus_destroy(&c2_bus_handle);
+		return -1;
+	}
+
+	if (si4010_init(&c2_bus_handle) != 0) {
+		c2_bus_destroy(&c2_bus_handle);
 		exit(EXIT_FAILURE);
 	}
 
@@ -551,5 +602,6 @@ int main(int argc, char *argv[])
 		optind++;
 	}
 
+	c2_bus_destroy(&c2_bus_handle);
 	return 0;
 }
