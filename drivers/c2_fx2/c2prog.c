@@ -74,6 +74,8 @@ void c2_reset()
 	// RESET
 	IOB = 0x00;
 	wait_10us(2);
+	wait_1us();
+	wait_1us();
 	IOB = 0x02;
 	wait_1us();
 	wait_1us();
