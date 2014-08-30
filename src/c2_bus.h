@@ -80,7 +80,7 @@ int c2_bus_qreset(struct c2_bus *bus);
  *
  * @param addr	Variable used to return address in
  */
-int c2_bus_read_addr(struct c2_bus *bus, uint8_t *addr);
+int c2_bus_addr_read(struct c2_bus *bus, uint8_t *addr);
 
 /**
  * Write address register
@@ -89,7 +89,7 @@ int c2_bus_read_addr(struct c2_bus *bus, uint8_t *addr);
  *
  * @param addr	Value to write to the address register
  */
-int c2_bus_write_addr(struct c2_bus *bus, uint8_t addr);
+int c2_bus_addr_write(struct c2_bus *bus, uint8_t addr);
 
 /**
  * Read data register

@@ -1,6 +1,6 @@
-LDFLAGS=-lusb
-C2_BUS_DRV=c2_bus_fx2.o c2_bus_c2drv.o
-CFLAGS+= -I../drivers/c2_lpt
+C2_BUS_DRV=c2_bus_fx2.o c2_bus_c2drv.o c2_bus_ftdi.o
+CFLAGS+=-Wall -I../drivers/c2_lpt
+LDFLAGS=-lusb -lftdi
 
 all: si4010prog ec2_emul
 

@@ -69,6 +69,8 @@ int c2_c2drv_reset(struct c2_bus *bus)
 
 	ioctl(hw->fd, C2_IOCRESET, NULL);
 	usleep(2);
+
+	return 0;
 }
 
 int c2_c2drv_qreset(struct c2_bus *bus)
@@ -76,6 +78,8 @@ int c2_c2drv_qreset(struct c2_bus *bus)
 	struct c2_bus_c2drv_ctx *hw = (struct c2_bus_c2drv_ctx *) bus->ctx;
 
 	ioctl(hw->fd, C2_IOCQRESET, NULL);    // stop execution on the MCU
+
+	return 0;
 }
 
 int c2_c2drv_addr_read(struct c2_bus *bus, unsigned char *addr)
@@ -83,6 +87,8 @@ int c2_c2drv_addr_read(struct c2_bus *bus, unsigned char *addr)
 	struct c2_bus_c2drv_ctx *hw = (struct c2_bus_c2drv_ctx *) bus->ctx;
 
 	ioctl(hw->fd, C2_IOCAREAD, &addr);
+
+	return 0;
 }
 
 int c2_c2drv_addr_write(struct c2_bus *bus, unsigned char addr)
@@ -90,6 +96,8 @@ int c2_c2drv_addr_write(struct c2_bus *bus, unsigned char addr)
 	struct c2_bus_c2drv_ctx *hw = (struct c2_bus_c2drv_ctx *) bus->ctx;
 
 	ioctl(hw->fd, C2_IOCAWRITE, &addr);
+
+	return 0;
 }
 
 int c2_c2drv_data_read(struct c2_bus *bus, unsigned char *data, size_t len)
@@ -100,6 +108,8 @@ int c2_c2drv_data_read(struct c2_bus *bus, unsigned char *data, size_t len)
 	assert(len == 1);
 	ioctl(hw->fd, C2_IOCD1READ, &v);
 	*data = v;
+
+	return 0;
 }
 
 int c2_c2drv_data_write(struct c2_bus *bus, const unsigned char *data, size_t len)
@@ -108,6 +118,8 @@ int c2_c2drv_data_write(struct c2_bus *bus, const unsigned char *data, size_t le
 
 	assert(len == 1);
 	ioctl(hw->fd, C2_IOCD1WRITE, data);
+
+	return 0;
 }
 
 void c2_c2drv_destroy(struct c2_bus *bus)

@@ -1,5 +1,5 @@
 /**
- * c2_bus_module.h - Things needed to write C2 Bus master modules
+ * c2_bus_ftdi.h - FTDI FT232R based SiLabs C2 programmer control functions
  *
  * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
  * All rights reserved.
@@ -26,37 +26,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __C2_BUS_FTDI_H__
+#define __C2_BUS_FTDI_H__
 
-#ifndef __C2_BUS_MODULE_H__
-#define __C2_BUS_MODULE_H__
+int c2_bus_ftdi_init(struct c2_bus *bus, const char *path);
 
-/**
- * Structure containing pointers to the implementations
- *
- * This structure contains pointers to the functions that implement the various
- * bus action for the underlying bus hardware type.
- */
-struct c2_bus_ops {
-	int (*reset) (struct c2_bus *bus);
-	int (*qreset) (struct c2_bus *bus);
-	int (*addr_read) (struct c2_bus *bus, unsigned char *addr);
-	int (*addr_write) (struct c2_bus *bus, unsigned char addr);
-	int (*data_read) (struct c2_bus *bus, unsigned char *data, size_t len);
-	int (*data_write) (struct c2_bus *bus, const unsigned char *data, size_t len);
-	void (*destruct) (struct c2_bus *bus);
-};
-
-/**
- * Set error message in C2 bus context
- */
-void c2_bus_set_error(struct c2_bus *bus, const char *msg);
- 
-/**
- * Set error message + system error in C2 bus context
- *
- * Set the C2 Bus context error message to the given error and automatically
- * append a system error based on the current value of errno.
- */
-void c2_bus_set_perror(struct c2_bus *bus, const char *msg);
-
-#endif // __C2_BUS_MODULE_H__
+#endif // __C2_BUS_FTDI_H__

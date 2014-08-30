@@ -26,6 +26,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+//#define C2_DEBUG
+
+#ifdef C2_DEBUG
+# include <stdio.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -36,6 +41,8 @@
 // implementations
 #include "c2_bus_c2drv.h"
 #include "c2_bus_fx2.h"
+#include "c2_bus_ftdi.h"
+
 
 void c2_bus_set_error(struct c2_bus *bus, const char *msg)
 {
@@ -67,8 +74,8 @@ int c2_bus_open(struct c2_bus *bus, const char *type, const char *path)
 
 	if (strcmp(type, "fx2") == 0) {
 		return c2_bus_fx2_init(bus, path);
-//	} else if (strcmp(type, "ft232") == 0) {
-//		return c2_bus_ft232_init(bus, path);
+	} else if (strcmp(type, "ft232") == 0) {
+		return c2_bus_ftdi_init(bus, path);
 	} else if (strcmp(type, "c2drv") == 0) {
 		return c2_bus_c2drv_init(bus, path);
 	}
@@ -79,31 +86,49 @@ int c2_bus_open(struct c2_bus *bus, const char *type, const char *path)
 
 int c2_bus_reset(struct c2_bus *bus)
 {
+#ifdef C2_DEBUG
+	fprintf(stderr, "%s\n", __func__);
+#endif
 	return bus->ops->reset(bus);
 }
 
 int c2_bus_qreset(struct c2_bus *bus)
 {
+#ifdef C2_DEBUG
+	fprintf(stderr, "%s\n", __func__);
+#endif
 	return bus->ops->qreset(bus);
 }
 
 int c2_bus_addr_read(struct c2_bus *bus, uint8_t *addr)
 {
+#ifdef C2_DEBUG
+	fprintf(stderr, "%s\n", __func__);
+#endif
 	return bus->ops->addr_read(bus, addr);
 }
 
 int c2_bus_addr_write(struct c2_bus *bus, uint8_t addr)
 {
+#ifdef C2_DEBUG
+	fprintf(stderr, "%s %.2x\n", __func__, addr);
+#endif
 	return bus->ops->addr_write(bus, addr);
 }
 
 int c2_bus_data_read(struct c2_bus *bus, uint8_t *data, size_t len)
 {
+#ifdef C2_DEBUG
+	fprintf(stderr, "%s %d\n", __func__, len);
+#endif
 	return bus->ops->data_read(bus, data, len);
 }
 
 int c2_bus_data_write(struct c2_bus *bus, const uint8_t *data, size_t len)
 {
+#ifdef C2_DEBUG
+	fprintf(stderr, "%s %d %.2x\n", __func__, len, data[0]);
+#endif
 	return bus->ops->data_write(bus, data, len);
 }
 

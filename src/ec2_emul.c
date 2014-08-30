@@ -37,6 +37,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <linux/un.h>
+#include <getopt.h>
 
 #include "ec2_cksum.h"
 #include "si4010.h"
@@ -48,6 +49,20 @@ uint8_t code_mem[0x1200] = { 0 };
 uint8_t iram_mem[0xFF] = { 0 };
 
 bool mcu_running = false;;
+
+void usage(const char *name)
+{
+	fprintf(stderr,
+		"Usage: %s [-d <uri] <socket file>\n"
+		"Options:\n"
+		"  -d <uri>       Programmer device to use. Use 'help' for help.\n"
+		"  -h             Print this help message\n"
+		"\n"
+		"Normaly the Socket file argument will point to a socket file created by a \n"
+		"VMWare virtual COM port.\n"
+		, name);
+}
+
 
 #define CRC16_CCITT_POLY 0x1021
 uint16_t update_crc16_ccitt(uint16_t crc, uint8_t val)
@@ -114,7 +129,7 @@ int write_byte(uint8_t b, int ifd)
 	return b;
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	int c;
 	uint8_t buf[256];
@@ -127,9 +142,44 @@ int main(int argc, const char *argv[])
 	int ifd = STDIN_FILENO;
 	int ofd = STDOUT_FILENO;
 	int retval = EXIT_SUCCESS;
+	int opt;
+	char *c2_bus_type = "fx2";
+	char *c2_bus_path = "";
+	struct c2_bus c2_bus_handle;
 
-	if (argc == 2) {
-		if (strcmp(argv[1], "-") != 0) {
+	while ((opt = getopt(argc, argv, "d:h")) != -1) {
+		switch (opt) {
+		case 'd':
+			c2_bus_type = optarg;
+			if (strcmp(c2_bus_type, "help") == 0) {
+				//usage_dev_uri();
+//TODO:
+				fprintf(stderr, "TODO:\n");
+				exit(EXIT_SUCCESS);
+			} else {
+				char *sep;
+				sep = strstr(c2_bus_type, "://");
+				if (sep == NULL) {
+					fprintf(stderr, "C2 bus device uri "
+							"incorrect format\n");
+					exit(EXIT_FAILURE);
+				}
+				*sep = '\0';
+				c2_bus_path = sep + 3;
+			}
+			break;
+		case 'h':
+			usage(argv[0]);
+			exit(EXIT_SUCCESS);
+			break;
+		default: /* '?' */
+			usage(argv[0]);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	if (argc - optind == 1) {
+		if (strcmp(argv[optind], "-") != 0) {
 			struct sockaddr_un saddr;
 			int sockfd;
 
@@ -140,7 +190,7 @@ int main(int argc, const char *argv[])
 			}
 
 			saddr.sun_family = AF_UNIX;
-			strncpy(saddr.sun_path, argv[1], UNIX_PATH_MAX);
+			strncpy(saddr.sun_path, argv[optind], UNIX_PATH_MAX);
 			saddr.sun_path[UNIX_PATH_MAX - 1] = '\0';
 
 			if (connect(sockfd, (struct sockaddr *) &saddr, sizeof(saddr)) != 0) {
@@ -152,17 +202,17 @@ int main(int argc, const char *argv[])
 			ifd = ofd = sockfd;
 		}
 	} else {
-		fprintf(stderr,
-			"usage: %s <socket file>\n"
-			"\n"
-			"Normaly the Socket file argument will point to a socket file created by a \n"
-			"VMWare virtual COM port.\n"
-			, argv[0]);
+		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
+	if (c2_bus_open(&c2_bus_handle, c2_bus_type, c2_bus_path) != 0) {
+		fprintf(stderr, "Failed to open C2 bus: %s\n",
+					c2_bus_get_error(&c2_bus_handle));
+		goto bad;
+	}
 
-	if (si4010_init() != 0) {
+	if (si4010_init(&c2_bus_handle) != 0) {
 		fprintf(stderr, "Failed to init si4010\n");
 		retval = EXIT_FAILURE;
 		goto bad;
@@ -314,7 +364,7 @@ int main(int argc, const char *argv[])
 		case 0x20:
 			// C2 Connect Target
 			fprintf(stderr, "C2 Connect Target\n");
-			if (si4010_init() == 0 && si4010_reset() == 0) {
+			if (si4010_init(&c2_bus_handle) == 0 && si4010_reset() == 0) {
 				write_byte(0x0d, ofd);
 			} else {
 				write_byte(0x00, ofd);
@@ -661,6 +711,7 @@ int main(int argc, const char *argv[])
 	}
 
 bad:
+	c2_bus_destroy(&c2_bus_handle);
 	if (ifd != STDIN_FILENO) {
 		close(ifd);
 	}

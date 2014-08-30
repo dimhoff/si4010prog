@@ -39,10 +39,10 @@ void usage(const char *name)
 		"SI-4010 ISP Programmer tool %s\n"
 		"Usage: %s [options] <commands...>\n"
 		"Options:\n"
-		"  -h             Print this help message\n"
 		"  -b             Use binary output when dumping data\n"
 		"  -d <uri>       Programmer device to use. Use 'help' for help.\n"
 		"  -q             Quiet\n"
+		"  -h             Print this help message\n"
 		"Commands:\n"
 		"  identify       Get Device ID and Revision ID\n"
 		"  reset          Reset 8051\n"
@@ -82,19 +82,32 @@ void usage_dev_uri()
 		"The URI format is: '<interface type>://<interface specific path>'\n"
 		"Below is a list of valid interface type names with a description.\n"
 		"\n"
-		"- c2drv\n"
+		"> c2drv\n"
 		"  This interface uses a standard LPT printer port and the c2drv Linux kernel\n"
 		"  module. The path specifies the device file of the kernel module.\n"
-		"- fx2\n"
+		"> fx2\n"
 		"  Cypress EZ-USB FX2 based bus interface. This interface requires a special\n"
 		"  firmware to be loaded into the device. If no path is specified the first FX2\n"
 		"  device found is used. To use a specific USB device the path must be in the\n"
 		"  format 'fx2://BBB/DDD', where 'BBB' is a 3 digit bus number and 'DDD' is the 3\n"
 		"  digit device number as can be obtained with lsusb.\n"
-		"- ft232\n"
-		"  FTDI FT232R based bus interface. PATH FORMAT TBD...\n"
+		"> ft232 (Default)\n"
+		"  FTDI FT232R based bus interface. Although easy to use, this interface is\n"
+		"  rather slow. As path string the libftdi description strings are used.\n"
+		"  These strings can have one of the following formats:\n"
+                "   - d:<devicenode>\n"
+		"     path of bus and device-node (e.g. \"003/001\") within usb device tree\n"
+		"     (usually at /proc/bus/usb/)\n"
+		"   - i:<vendor>:<product>\n"
+		"     First device with given vendor and product id, ids can be decimal, octal\n"
+		"     (preceded by \"0\") or hex (preceded by \"0x\")\n"
+		"   - i:<vendor>:<product>:<index>\n"
+		"     As above with index being the number of the device (starting with 0) if\n"
+		"     there are more than one\n"
+		"   - s:<vendor>:<product>:<serial>\n"
+		"     First device with given vendor id, product id and serial string\n"
+		"  By default the path \"ftdi://d:0x0403:0x6001\" is used\n"
 		);
-//TODO:
 }
 
 static void *CheckMalloc(void *ptr)
@@ -276,7 +289,7 @@ int ProgramIHexFile(const char *path)
 int main(int argc, char *argv[])
 {
 	int opt;
-	char *c2_bus_type = "fx2";
+	char *c2_bus_type = "ft232";
 	char *c2_bus_path = "";
 
 	int errors = 0;
@@ -525,7 +538,7 @@ int main(int argc, char *argv[])
 			if (len<1)  len=1;
 			if (len > 1024*1024)  len=1024*1024;
 			if (adr < 0x80 || adr > 0xff) { 
-				fprintf(stderr,"Command 'rsfr': Address out of range(0x80-0xff).\n");
+				fprintf(stderr,"Command 'dsfr': Address out of range(0x80-0xff).\n");
 				++errors; 
 			} else {
 				if (adr + len > 0x100) { len = 0x100 - adr; };

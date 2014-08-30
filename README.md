@@ -6,11 +6,25 @@ controller.
 C2 Bus Master
 -------------
 The si4010prog program requires some sort of C2 Bus master hardware to interact
-with the C2 bus. Currently a C2 Bus master implementation for the Cypress FX2
-micro controller is used by default. Although a driver for Linux 2.4/2.6 is also
-available that uses the LPT port as C2 bus master.
+with the C2 bus. Currently a C2 Bus master implementation for the FTDI FT232R is
+used by default. This is a cheap and easy to setup bus master. Downside is that
+it is relatively slow. The SI4010 is connected to the FT232R according to the
+following schematic:
 
-See the drivers/ directory for the available bus masters.
+    FT232R                SI4010
+
+       3v3 -------------- VCC
+       DTR ----/\1K/\---- C2CK(/GPIO5)
+       CTS ----/\1K/\---- C2D(/GPIO7)
+       GND -------------- GND
+
+For faster programming speeds the Cypress FX2 micro controller based bus master
+is suggested. More information about this bus master can be found in
+drivers/c2_fx2/README.md. A driver for Linux 2.4/2.6 is also available that
+uses the LPT port as C2 bus master.
+
+See the drivers/ directory for more available bus masters, or run _si4010prog -d
+help_ to get a full list of available bus masters.
 
 Known Issues
 ------------
