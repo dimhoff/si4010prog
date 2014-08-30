@@ -14,8 +14,8 @@ following schematic:
     FT232R                SI4010
 
        3v3 -------------- VCC
-       DTR ----/\1K/\---- C2CK(/GPIO5)
-       CTS ----/\1K/\---- C2D(/GPIO7)
+       DTR ----/\1K/\---- C2CLK(/GPIO5)
+       CTS ----/\1K/\---- C2DAT(/GPIO4)
        GND -------------- GND
 
 For faster programming speeds the Cypress FX2 micro controller based bus master
