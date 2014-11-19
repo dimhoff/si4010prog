@@ -213,7 +213,7 @@ int _ProgramIHexLine(const char *buf, const char *path, int line)
 		unsigned int i;
 		unsigned int file_cksum = 0;
 		//printf("  Writing nbytes=%d at addr=0x%04x\n",nbytes,addr);
-		assert(nbytes>=0 && nbytes<256);
+		assert(nbytes<256);
 		for(i=0; i < nbytes; i++)
 		{
 			unsigned int d=0;
@@ -561,7 +561,7 @@ int main(int argc, char *argv[])
 			}
 			printf("0x%.4hx\n", pc);
 		} else if(!strcmp(cmd, "setpc")) {
-			uint16_t pc;
+			int pc=-1;
 			if (args[0] && *args[0]) {  pc = strtol(args[0],NULL,0);  }
 			if (pc < 0 || pc > 0xffff) {
 				fprintf(stderr,"Command 'setpc': Value out of range(0x0-0xffff).\n");

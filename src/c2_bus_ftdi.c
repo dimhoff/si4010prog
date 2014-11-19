@@ -401,7 +401,7 @@ int c2_ftdi_qreset(struct c2_bus *bus)
 
 int c2_ftdi_addr_read(struct c2_bus *bus, unsigned char *addr)
 {
-	uint8_t ins = C2_INS_ADDR_READ;
+	uint8_t ins[1] = { C2_INS_ADDR_READ };
 	uint8_t buf[2];
 
 	// Start
@@ -409,7 +409,7 @@ int c2_ftdi_addr_read(struct c2_bus *bus, unsigned char *addr)
 
 	// Ins
 	CHECK(_enable_c2d_out(bus));
-	CHECK(_write_bits(bus, &ins, 2));
+	CHECK(_write_bits(bus, ins, 2));
 	CHECK(_disable_c2d_out(bus));
 
 	// Addr + Stop
@@ -441,7 +441,7 @@ int c2_ftdi_addr_write(struct c2_bus *bus, unsigned char addr)
 
 int c2_ftdi_data_read(struct c2_bus *bus, unsigned char *data, size_t len)
 {
-	uint8_t ins;
+	uint8_t ins[1];
 	uint8_t buf[5];
 	
 	assert(len <= 4);
@@ -451,8 +451,8 @@ int c2_ftdi_data_read(struct c2_bus *bus, unsigned char *data, size_t len)
 
 	// Ins + Len
 	CHECK(_enable_c2d_out(bus));
-	ins = C2_INS_DATA_READ | (((len - 1) & 0x3) << 2);
-	CHECK(_write_bits(bus, &ins, 4));
+	ins[0] = C2_INS_DATA_READ | (((len - 1) & 0x3) << 2);
+	CHECK(_write_bits(bus, ins, 4));
 	CHECK(_disable_c2d_out(bus));
 
 	// Wait

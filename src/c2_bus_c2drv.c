@@ -42,7 +42,7 @@ struct c2_bus_ops c2_bus_c2drv_ops = {
 
 int c2_bus_c2drv_init(struct c2_bus *bus, const char *path)
 {
-	struct c2_bus_c2drv_ctx *hw =
+	struct c2_bus_c2drv_ctx *hw;
 
 	hw = (struct c2_bus_c2drv_ctx *) malloc(sizeof(struct c2_bus_c2drv_ctx));
 	if (hw == NULL) {
