@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <assert.h>
+#include <arpa/inet.h>
 
 #include "dehexify.h"
 #include "si4010.h"
@@ -33,15 +34,18 @@
 
 #define MAXARGS 16 //< Maximum number of subarguments for a command argument 
 
+bool just_say_yes = false;
+
 void usage(const char *name)
 {
 	fprintf(stderr,
 		"SI-4010 ISP Programmer tool %s\n"
 		"Usage: %s [options] <commands...>\n"
 		"Options:\n"
-		"  -b             Use binary output when dumping data\n"
+//		"  -b             Use binary output when dumping data\n"
 		"  -d <uri>       Programmer device to use. Use 'help' for help.\n"
-		"  -q             Quiet\n"
+//		"  -q             Quiet\n"
+		"  -y             Answer 'Yes' to all questions, possibly destroying data\n"
 		"  -h             Print this help message\n"
 		"Commands:\n"
 		"  identify       Get Device ID and Revision ID\n"
@@ -60,6 +64,8 @@ void usage(const char *name)
 		"  dxram:ADR,LEN  Dump XRAM content: LEN bytes starting at ADR\n"
 		"  wsfr:ADR,VAL   Write VAL to SFR byte at address ADR\n"
 		"  dsfr:ADR,LEN   Dump LEN bytes from the SFR memory starting at address ADR\n"
+		"  dnvm:ADR,LEN   Dump LEN bytes from NVM memory starting at address ADR.\n"
+		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints.\n"
 		"  getpc          Get the value of the PC\n"
 		"  setpc:VAL      Set the value of the PC to VAL: VAL is a 16-bit hexadecimal\n"
 		"                 number\n"
@@ -286,17 +292,113 @@ int ProgramIHexFile(const char *path)
 	return (n_errors ? -1 : 0);
 }
 
+#include "../firmware/nvm_dump/nvm_dump_generated.c"
+// Address in ram where parameters to NVM_Dump are passed
+#define NVM_DUMP_PARAM_ADDR 0x40
+// Address in xram where firmware returns data
+#define NVM_DUMP_RETURN_ADDR sizeof(nvm_dump_prog)
+
+/**
+ * Read NVM memory
+ *
+ * Read bytes from the NVM memory. To be able to do this the MCU will be reset
+ * and a dumper firmware will be run to obtain the NVM content.
+ *
+ * @param addr	Address in NVM to start reading. NVM is mapped from address
+ *		0xE000 to 0xFFFF.
+ * @param len	Amount of bytes to read.
+ * @param buf	Pointer to return data in.
+ */
+int si4010_nvm_read(uint16_t addr, uint16_t len, uint8_t *buf)
+{
+#pragma pack(1)
+	const struct {
+		uint16_t addr;
+		uint16_t len;
+		uint8_t running;
+	} nvm_dump_param = { htons(addr), htons(len), 1};
+	struct {
+		uint16_t addr;
+		uint16_t len;
+	} nvm_dump_ret_hdr;
+#pragma pack()
+
+	assert(addr + len >= addr);
+	assert(addr >= 0xE000);
+
+	if (si4010_reset() != 0) {
+		fprintf(stderr, "Unable to read NVM: Reset failed\n");
+		return 1;
+	}
+
+	if (si4010_xram_write(0, sizeof(nvm_dump_prog), nvm_dump_prog) != 0) {
+		fprintf(stderr, "Unable to read NVM: Could not write dumper program\n");
+		return 1;
+	}
+
+	if (si4010_ram_write(NVM_DUMP_PARAM_ADDR, sizeof(nvm_dump_param), &nvm_dump_param) != 0) {
+		fprintf(stderr, "Unable to read NVM: Could not write dumper parameters\n");
+		return 1;
+	}
+
+	if (si4010_bp_set(0, NVM_DUMP_BP_ADDR) != 0) {
+		fprintf(stderr, "Unable to read NVM: Could not set breakpoint\n");
+		return 1;
+	}
+	//TODO: loop until 'len' is satisfied
+	while (len != 0) {
+		if (si4010_resume() != 0) {
+			fprintf(stderr, "Unable to read NVM: Could not resume execution\n");
+			return 1;
+		}
+
+		sleep(1);
+
+		if (si4010_xram_read(NVM_DUMP_RETURN_ADDR, sizeof(nvm_dump_ret_hdr), &nvm_dump_ret_hdr) != 0) {
+			fprintf(stderr, "Unable to read NVM: Could read dump header from XRAM\n");
+			return 1;
+		}
+		nvm_dump_ret_hdr.addr = ntohs(nvm_dump_ret_hdr.addr);
+		nvm_dump_ret_hdr.len = ntohs(nvm_dump_ret_hdr.len);
+
+		if (nvm_dump_ret_hdr.len == 0 ||
+		    nvm_dump_ret_hdr.addr != addr) {
+			fprintf(stderr, "Unable to read NVM: Unexpected data returned addr=0x%04hx len=0x%04hx\n", nvm_dump_ret_hdr.addr, nvm_dump_ret_hdr.len);
+			return 1;
+		}
+		if (nvm_dump_ret_hdr.len > len) {
+			nvm_dump_ret_hdr.len = len;
+		}
+
+		if (si4010_xram_read(NVM_DUMP_RETURN_ADDR + sizeof(nvm_dump_ret_hdr), nvm_dump_ret_hdr.len, buf) != 0) {
+			fprintf(stderr, "Unable to read NVM: Could read dumped data from XRAM\n");
+			return 1;
+		}
+
+		buf  += nvm_dump_ret_hdr.len;
+		addr += nvm_dump_ret_hdr.len;
+		len  -= nvm_dump_ret_hdr.len;
+	}
+
+	if (si4010_reset() != 0) {
+		fprintf(stderr, "WARNING: unable to reset MCU after reading NVM\n");
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
 	char *c2_bus_type = "ft232";
 	char *c2_bus_path = "";
 
+	bool abort = false;
 	int errors = 0;
 	bool ignore_errors = false;
 	struct c2_bus c2_bus_handle;
 
-	while ((opt = getopt(argc, argv, "d:h")) != -1) {
+	while ((opt = getopt(argc, argv, "d:yh")) != -1) {
 		switch (opt) {
 		case 'd':
 			c2_bus_type = optarg;
@@ -314,6 +416,9 @@ int main(int argc, char *argv[])
 				*sep = '\0';
 				c2_bus_path = sep + 3;
 			}
+			break;
+		case 'y':
+			just_say_yes = true;
 			break;
 		case 'h':
 			usage(argv[0]);
@@ -345,7 +450,7 @@ int main(int argc, char *argv[])
 	}
 
 	// execute commands
-	while (optind < argc && (ignore_errors || errors == 0)) {
+	while (optind < argc && (ignore_errors || errors == 0) && !abort) {
 		// Copy command and args so that we can manipulate it. 
 		char *cmd = strdup(argv[optind]);
 		
@@ -552,6 +657,76 @@ int main(int argc, char *argv[])
 					++errors;
 				}
 			}
+		} else if (!strcmp(cmd, "dmtp")) {
+			int adr = 0;
+			int len = 16;
+			if (args[0] && *args[0]) { adr = strtol(args[0],NULL,0); }
+			if (args[1] && *args[1]) { len = strtol(args[1],NULL,0); }
+			if (adr < 0 || adr >= 16) {
+				fprintf(stderr, "Command 'dmtp': Address out-of-range(0-15)\n");
+				++errors;
+			} else if (len < 0) {
+				fprintf(stderr, "Command 'dmtp': Length too small\n");
+				++errors;
+			} else if (len > 16 - adr) {
+				fprintf(stderr, "Command 'dmtp': Length too big\n");
+				++errors;
+			} else {
+				fprintf(stderr, "Dumping %u bytes of MTP memory at 0x%.2x:\n", len, adr);
+				if (! just_say_yes) {
+					char answer[2];
+					fprintf(stderr, "Dumping MTP memory will overwrite the currently loaded program.\n");
+					fprintf(stderr, "Continue? (y/n) ");
+					if (fgets(answer, sizeof(answer), stdin) == NULL || answer[-1] != 'y') {
+						abort = true;
+					}
+				}
+				if (! abort) {
+					fprintf(stderr, "TODO: implement\n");
+#if 0
+					unsigned char *buf[16] = { 0 };
+					if (si4010_mtp_read(adr, len, buf) == 0) {
+						HexDumpBuffer(stdout, buf, len, /*with_ascii=*/1);
+					} else {
+						++errors;
+					}
+#endif
+				}
+			}
+		} else if (!strcmp(cmd, "dnvm")) {
+			int adr = 0;
+			int len = 16;
+			if (args[0] && *args[0]) { adr = strtol(args[0],NULL,0); }
+			if (args[1] && *args[1]) { len = strtol(args[1],NULL,0); }
+			if (adr < 0 || adr >= 0x2000) {
+				fprintf(stderr, "Command 'dnvm': Address out-of-range(0-0x2000)\n");
+				++errors;
+			} else if (len < 0) {
+				fprintf(stderr, "Command 'dnvm': Length too small\n");
+				++errors;
+			} else if (len > 0x2000 - adr) {
+				fprintf(stderr, "Command 'dnvm': Length too big\n");
+				++errors;
+			} else {
+				fprintf(stderr, "Dumping %u bytes of NVM memory at 0x%04x:\n", len, adr);
+				if (! just_say_yes) {
+					char answer[2];
+					fprintf(stderr, "Dumping NVM memory will overwrite the currently loaded program.\n");
+					fprintf(stderr, "Continue? (y/n) ");
+					if (fgets(answer, sizeof(answer), stdin) == NULL || answer[0] != 'y') {
+						abort = true;
+					}
+				}
+				if (! abort) {
+					unsigned char *buf = (unsigned char*) CheckMalloc(malloc(len));
+					if (si4010_nvm_read(adr + 0xE000, len, buf) == 0) {
+						HexDumpBuffer(stdout, buf, len, /*with_ascii=*/1);
+					} else {
+						++errors;
+					}
+					free(buf);
+				}
+			}
 		} else if(!strcmp(cmd, "getpc")) {
 			uint16_t pc;
 			fprintf(stderr, "Getting program counter:\n");
@@ -585,6 +760,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr,"Command 'break': NR out of range(0-7).\n");
 				++errors; 
 			} else {
+				//TODO: check return value
 				si4010_bp_set(bp, adr);
 			}
 		} else if(!strcmp(cmd, "cbreak")) {
@@ -595,6 +771,7 @@ int main(int argc, char *argv[])
 					fprintf(stderr,"Command 'break': NR out of range(0-7).\n");
 					++errors; 
 				} else {
+					//TODO: check return value
 					si4010_bp_clear(bp);
 				}
 			} else {
