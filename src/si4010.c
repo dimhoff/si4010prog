@@ -204,9 +204,9 @@ int si4010_bp_set(uint8_t bpid, uint16_t addr)
 		return err;
 	}
 
-	buf[0] = (addr >> 8) & 0xff;
-	buf[1] = addr & 0xff;
-	err = si4010_sfr_write(BPH, 2, buf);
+	buf[0] = addr & 0xff;
+	buf[1] = (addr >> 8) & 0xff;
+	err = si4010_sfr_write(BPL, 2, buf);
 	if (err != 0) {
 		return err;
 	}

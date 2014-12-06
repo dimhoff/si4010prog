@@ -12,3 +12,6 @@ breakpoints:
 bus:
  - GPIO based bus master as replacement for deprecated LPT port
  - Fix LPT based bus master(c2drv) to work with modern kernel
+
+ft232:
+ - Find out why 'halt' doesn't work after loading code
