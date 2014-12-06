@@ -282,7 +282,6 @@ int si4010_pc_get(uint16_t *pc)
 int si4010_pc_set(uint16_t pc)
 {
 	uint8_t buf[2];
-	int err;
 
 	buf[0] = pc & 0xff;
 	buf[1] = (pc >> 8) & 0xff;
@@ -392,25 +391,34 @@ int si4010_ram_write(uint8_t addr, uint8_t len, const void *buf)
 int si4010_xram_read(uint16_t addr, size_t len, void *buf)
 {
 	uint8_t *bbuf = (uint8_t *) buf;
+	size_t blen;
+	int i;
 
-	C2_WriteReg(FPDAT, XRAM_READ);
-	WaitForInReady();
+	while (len != 0) {
+		blen = (len > 0x100) ?  0x100 : len;
 
-	// Check status before starting Flash access sequence
-	WaitForOutReady();
-	if (C2_ReadData() != COMMAND_OK) {
-		return -1;
-	}
+		C2_WriteReg(FPDAT, XRAM_READ);
+		WaitForInReady();
 
-	C2_WriteData(addr >> 8); WaitForInReady();
-	C2_WriteData(addr & 0xFF); WaitForInReady();
-	C2_WriteData(len); WaitForInReady();
-
-	// Read data
-	do {
+		// Check status before starting Flash access sequence
 		WaitForOutReady();
-		*bbuf++ = C2_ReadData();
-	} while (--len);
+		if (C2_ReadData() != COMMAND_OK) {
+			return -1;
+		}
+
+		C2_WriteData(addr >> 8); WaitForInReady();
+		C2_WriteData(addr & 0xFF); WaitForInReady();
+		C2_WriteData(blen); WaitForInReady();
+
+		// Read data
+		for (i=0; i < blen; i++) {
+			WaitForOutReady();
+			*bbuf++ = C2_ReadData();
+		}
+
+		addr += blen;
+		len -= blen;
+	}
 
 	return 0;
 }
@@ -418,31 +426,41 @@ int si4010_xram_read(uint16_t addr, size_t len, void *buf)
 int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf)
 {
 	uint8_t *bbuf = (uint8_t *) buf;
+	size_t blen;
+	int i;
 
-	C2_WriteReg(FPDAT, XRAM_WRITE);
-	WaitForInReady();
+	while (len != 0) {
+		blen = (len > 0x100) ?  0x100 : len;
 
-	// Check status before starting Flash access sequence
-	WaitForOutReady();
-	if (C2_ReadData() != COMMAND_OK) {
-		return -1;
-	}
-
-	C2_WriteData(addr >> 8); WaitForInReady();
-	C2_WriteData(addr & 0x00FF); WaitForInReady();
-	C2_WriteData(len); WaitForInReady();
-
-	// Write Flash block (BlkSize of 0x00 = 256)
-	do {
-		C2_WriteData(*bbuf++);
+		C2_WriteReg(FPDAT, XRAM_WRITE);
 		WaitForInReady();
-	} while (--len);
 
-	// Check status before writing Flash block
-	WaitForOutReady();
-	if (C2_ReadData() != COMMAND_OK) {
-		return -1;
+		// Check status before starting Flash access sequence
+		WaitForOutReady();
+		if (C2_ReadData() != COMMAND_OK) {
+			return -1;
+		}
+
+		C2_WriteData(addr >> 8); WaitForInReady();
+		C2_WriteData(addr & 0x00FF); WaitForInReady();
+		C2_WriteData(blen); WaitForInReady();
+
+		// Write Flash block (BlkSize of 0x00 = 256)
+		for (i=0; i < blen; i++) {
+			C2_WriteData(*bbuf++);
+			WaitForInReady();
+		}
+
+		// Check status after writing Flash block
+		WaitForOutReady();
+		if (C2_ReadData() != COMMAND_OK) {
+			return -1;
+		}
+
+		addr += blen;
+		len -= blen;
 	}
+
 	return 0;
 }
 
@@ -450,7 +468,6 @@ int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf)
 int si4010_reset()
 {
 	struct timespec tspec;
-	int err;
 
 	c2_bus_reset(c2_bus_handle); // reset target device
 
