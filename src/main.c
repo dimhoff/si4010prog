@@ -64,8 +64,13 @@ void usage(const char *name)
 		"  dxram:ADR,LEN  Dump XRAM content: LEN bytes starting at ADR\n"
 		"  wsfr:ADR,VAL   Write VAL to SFR byte at address ADR\n"
 		"  dsfr:ADR,LEN   Dump LEN bytes from the SFR memory starting at address ADR\n"
-		"  dnvm:ADR,LEN   Dump LEN bytes from NVM memory starting at address ADR.\n"
-		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints.\n"
+		"  wmtp:ADR,VAL   Write VAL to MTP memory starting at address ADR\n"
+		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
+		"  dmtp:ADR,LEN   Dump LEN bytes from MTP memory starting at address ADR\n"
+		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
+		"  getpc          Get the value of the PC\n"
+		"  dnvm:ADR,LEN   Dump LEN bytes from NVM memory starting at address ADR\n"
+		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
 		"  getpc          Get the value of the PC\n"
 		"  setpc:VAL      Set the value of the PC to VAL: VAL is a 16-bit hexadecimal\n"
 		"                 number\n"
@@ -291,6 +296,124 @@ int ProgramIHexFile(const char *path)
 	
 	return (n_errors ? -1 : 0);
 }
+
+#include "../firmware/mtp_prog/mtp_prog_generated.c"
+// Address in ram where parameters to MTP_Prog are passed
+#define MTP_PROG_PARAM_ADDR 0x40
+// Size of MTP memory
+#define MTP_SIZE 16
+// Si4010 ROM abMTP_RDATA XREG address
+#define ADDR_abMTP_RDATA 0x4040
+
+enum {
+	MTP_PROG_RESULT_WRITE_SUCCESS = 0,
+	MTP_PROG_RESULT_WRITE_FAILED  = 1,
+	MTP_PROG_RESULT_READ_SUCCESS  = 2,
+	MTP_PROG_RESULT_INVALID       = 0xff,
+};
+
+/**
+ * Read/Write MTP memory
+ *
+ * Write bytes to the MTP memory and read back the resulting MTP memory. To only
+ * read data from MTP a zero length write can be used. To be able to do this the
+ * MCU will be reset and a dumper firmware will be run to obtain the MTP content.
+ *
+ * @param waddr	Address in MTP to start writing. Range 0-15.
+ * @param wlen	Amount of bytes to write. Use 0 to only read from MTP.
+ * @param wbuf	Pointer to buffer containing data to write. Can be NULL if len
+ *		is 0.
+ * @param rbuf	Pointer to buffer of MTP_SIZE bytes to read final MTP content
+ *		in. Can be NULL to only write the MTP.
+ */
+int si4010_mtp_read_write(uint8_t waddr, uint8_t wlen, uint8_t *wbuf,
+				uint8_t rbuf[MTP_SIZE])
+{
+	assert(waddr < 16);
+	assert(wlen <= 16);
+	assert(waddr + wlen <= 16);
+
+#pragma pack(1)
+	struct {
+		uint8_t result;
+		uint8_t offset;
+		uint8_t len;
+		uint8_t data[MTP_SIZE];
+	} mtp_prog_param = { MTP_PROG_RESULT_INVALID, waddr, wlen, { 0 } };
+#pragma pack()
+	if (wlen != 0) {
+		memcpy(mtp_prog_param.data, wbuf, wlen);
+	}
+
+	if (si4010_reset() != 0) {
+		fprintf(stderr, "Unable to read/write MTP: Reset failed\n");
+		return 1;
+	}
+
+	if (si4010_xram_write(0, sizeof(mtp_prog_fw), mtp_prog_fw) != 0) {
+		fprintf(stderr, "Unable to read/write MTP: Could not write dumper program\n");
+		goto fail;
+	}
+
+	if (si4010_ram_write(MTP_PROG_PARAM_ADDR, sizeof(mtp_prog_param), &mtp_prog_param) != 0) {
+		fprintf(stderr, "Unable to read/write MTP: Could not write dumper parameters\n");
+		goto fail;
+	}
+
+	if (si4010_bp_set(0, MTP_PROG_BP_ADDR) != 0) {
+		fprintf(stderr, "Unable to read/write MTP: Could not set breakpoint\n");
+		goto fail;
+	}
+
+	if (si4010_resume() != 0) {
+		fprintf(stderr, "Unable to read/write NVM: Could not resume execution\n");
+		goto fail;
+	}
+
+	sleep(1);
+
+	if (si4010_ram_read(MTP_PROG_PARAM_ADDR, sizeof(mtp_prog_param), &mtp_prog_param) != 0) {
+		fprintf(stderr, "Unable to read/write MTP: Could read dumper result\n");
+		goto fail;
+	}
+	switch (mtp_prog_param.result) {
+	case MTP_PROG_RESULT_WRITE_SUCCESS:
+		break;
+	case MTP_PROG_RESULT_WRITE_FAILED:
+		fprintf(stderr, "Unable to read/write MTP: Write Failed\n");
+		goto fail;
+	case MTP_PROG_RESULT_READ_SUCCESS:
+		if (wlen != 0) {
+			fprintf(stderr, "Unable to read/write MTP: Write didn't "
+				"complete\n");
+			goto fail;
+		}
+		break;
+	case MTP_PROG_RESULT_INVALID:
+	default:
+		fprintf(stderr,
+			"Unable to read/write MTP: Result code incorrect (0x%02x)\n",
+			mtp_prog_param.result);
+		goto fail;
+	}
+
+	if (rbuf != NULL) {
+		if (si4010_xram_read(ADDR_abMTP_RDATA, MTP_SIZE, rbuf) != 0) {
+			fprintf(stderr, "Unable to read/write MTP: "
+					"Could read MTP content from XRAM\n");
+			goto fail;
+		}
+	}
+
+	return 0;
+fail:
+	if (si4010_reset() != 0) {
+		fprintf(stderr, "WARNING: unable to reset MCU after reading MTP\n");
+	}
+
+	return 1;
+}
+
 
 #include "../firmware/nvm_dump/nvm_dump_generated.c"
 // Address in ram where parameters to NVM_Dump are passed
@@ -657,6 +780,46 @@ int main(int argc, char *argv[])
 					++errors;
 				}
 			}
+		} else if (!strcmp(cmd, "wmtp")) {
+			uint8_t buf[MTP_SIZE] = { 0 };
+			int adr = -1;
+			int len = -1;
+			if (args[0] && *args[0]) { adr = strtol(args[0],NULL,0); }
+			if (args[1] && *args[1]) { len = strlen(args[1]) / 2; }
+			if (adr < 0 || adr >= 16) {
+				fprintf(stderr, "Command 'wmtp': Address out-of-range(0-15)\n");
+				++errors;
+			} else if (len < 0) {
+				fprintf(stderr, "Command 'wmtp': Missing VAL\n");
+				++errors;
+			} else if (strlen(args[1]) & 0x01) {
+				fprintf(stderr, "Command 'wmtp': VAL must be an even number of characters\n");
+				++errors;
+			} else if (len > 16 - adr) {
+				fprintf(stderr, "Command 'wmtp': VAL too long\n");
+				++errors;
+			} else if (dehexify(args[1], len, buf) != 0) {
+				fprintf(stderr, "Command 'wmtp': VAL contains non hexadecimal characters\n");
+				++errors;
+			} else {
+				fprintf(stderr, "Writing MTP bytes at 0x%.2x-0x%.2x\n", adr, adr + len);
+
+				if (! just_say_yes) {
+					char answer[2];
+					fprintf(stderr, "Writing MTP memory will overwrite the currently loaded program.\n");
+					fprintf(stderr, "Continue? (y/n) ");
+					if (fgets(answer, sizeof(answer), stdin) == NULL || answer[0] != 'y') {
+						abort = true;
+					}
+				}
+				if (! abort) {
+					if (si4010_mtp_read_write(adr, len, buf, NULL) != 0) {
+						fprintf(stderr, "Command 'wmtp' failed\n");
+						++errors;
+					}
+				}
+			}
+
 		} else if (!strcmp(cmd, "dmtp")) {
 			int adr = 0;
 			int len = 16;
@@ -677,20 +840,17 @@ int main(int argc, char *argv[])
 					char answer[2];
 					fprintf(stderr, "Dumping MTP memory will overwrite the currently loaded program.\n");
 					fprintf(stderr, "Continue? (y/n) ");
-					if (fgets(answer, sizeof(answer), stdin) == NULL || answer[-1] != 'y') {
+					if (fgets(answer, sizeof(answer), stdin) == NULL || answer[0] != 'y') {
 						abort = true;
 					}
 				}
 				if (! abort) {
-					fprintf(stderr, "TODO: implement\n");
-#if 0
-					unsigned char *buf[16] = { 0 };
-					if (si4010_mtp_read(adr, len, buf) == 0) {
-						HexDumpBuffer(stdout, buf, len, /*with_ascii=*/1);
+					uint8_t buf[MTP_SIZE] = { 0 };
+					if (si4010_mtp_read_write(0, 0, NULL, buf) == 0) {
+						HexDumpBuffer(stdout, &buf[adr], len, /*with_ascii=*/1);
 					} else {
 						++errors;
 					}
-#endif
 				}
 			}
 		} else if (!strcmp(cmd, "dnvm")) {
@@ -790,6 +950,10 @@ int main(int argc, char *argv[])
 			++errors; 
 		}
 		optind++;
+	}
+
+	if (abort) {
+		fprintf(stderr, "Aborted\n");
 	}
 
 	c2_bus_destroy(&c2_bus_handle);
