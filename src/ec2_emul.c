@@ -699,6 +699,43 @@ int main(int argc, char *argv[])
 			write_byte(0x0d, ofd);
 			break;
 */
+		case 0x3e:
+			// C2 Read XDATA EMIF
+			c = read_byte(ifd);
+			if (c == EOF) {
+				fprintf(stderr, "Invalid C2 Read XDATA EMIF byte 1 0x%.2x\n", c);
+				break;
+			}
+			addr = c;
+			c = read_byte(ifd);
+			if (c == EOF) {
+				fprintf(stderr, "Invalid C2 Read XDATA EMIF byte 2 0x%.2x\n", c);
+				break;
+			}
+			addr |= (c << 8);
+			c = read_byte(ifd);
+			if (c == EOF) {
+				fprintf(stderr, "Invalid C2 Read XDATA EMIF byte 3 0x%.2x\n", c);
+				break;
+			}
+			len = c;
+
+			fprintf(stderr, "C2 Read XDATA EMIF %d @ 0x%.4x\n", len, addr);
+			if (addr > 0xFFFF - len) {
+				fprintf(stderr, "C2 Read XDATA EMIF address out of range 0x%.4x\n", addr);
+				break;
+			}
+
+			if (si4010_xram_read(addr, len, buf) != 0) {
+				fprintf(stderr, "Failed to read from XRAM\n");
+			}
+
+			for (i=0; i < len; i++) {
+				write_byte(buf[i], ofd);
+			}
+			write_byte(0x00, ofd);
+
+			break;
 
 
 			
