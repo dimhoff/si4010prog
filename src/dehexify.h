@@ -1,7 +1,7 @@
 /**
  * dehexify.h - Convert hexadecimal encoded ASCII string to binary
  *
- * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2015, David Imhoff <dimhoff_devel@xs4all.nl>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,16 @@
 #ifndef __DEHEXIFY_H__
 #define __DEHEXIFY_H__
 
+/**
+ * Convert hex encoded string to binary
+ *
+ * @param in	Hexified string
+ * @param bytes	Number of bytes to dehexify. Note that 1 byte means two
+ * 		characters of the input string
+ * @param out	Output buffer to return dehexified data in
+ *
+ * @returns	0 on success, else -1 on error
+ */
 int dehexify(const char *in, size_t bytes, unsigned char *out);
 
 #endif // __DEHEXIFY_H__
