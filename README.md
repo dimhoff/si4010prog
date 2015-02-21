@@ -31,6 +31,7 @@ Known Issues
 - Currently there is no way to check if the micro controller is running. 
 - Issuing a halt command when micro controller already halted cause protocol
   break. This can only be fixed by doing a 'reset'.
+- C2 protocol breaks in some cases when using FT232 C2 interface
 
 Usage Examples
 --------------
@@ -55,3 +56,6 @@ Usage Examples
         Dumping 16 bytes of RAM at 0x08:
           0x0000 01daa1a2a3000000 0000000000000000                                      ................
 
+NVM programming
+---------------
+See 'nvm_programming.markdown'

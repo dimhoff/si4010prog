@@ -1,17 +1,21 @@
-generic:
- - Better handling of running/debug state, to prevent the bus to become broken when issuing a wrong combination of commands.
- - test function that checks if bus works and requests/checks the device product ID's
- - NVRAM programming
- - write man page
- - CMake build scripts
+generic
+-------
+- Better handling of running/debug state, to prevent the bus to become broken when issuing a wrong combination of commands.
+- test function that checks if bus works and requests/checks the device product ID's
+- Direct load NBF files
+- write man page
+- CMake build scripts
 
-breakpoints:
- - Detect breakpoint triggering
- - Wait for breakpoint
+breakpoints
+-----------
+- Detect breakpoint triggering
+- Wait for breakpoint
 
-bus:
- - GPIO based bus master as replacement for deprecated LPT port
- - Fix LPT based bus master(c2drv) to work with modern kernel
+bus
+---
+- GPIO based bus master as replacement for deprecated LPT port
+- Fix LPT based bus master(c2drv) to work with modern kernel
 
-ft232:
- - Find out why 'halt' doesn't work after loading code
+ft232
+-----
+- Find out why 'halt' doesn't work after loading code
