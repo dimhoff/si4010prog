@@ -475,6 +475,7 @@ int si4010_reset()
 	tspec.tv_nsec = 2000L;
 	nanosleep(&tspec, NULL);   // Delay for at least 2us
 //TODO: check return
+return 0;
 
 	// Initialize the C2 Interface for flashing & debugging
 //TODO: check if this is really needed for debugging

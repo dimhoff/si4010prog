@@ -26,7 +26,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-//#define C2_FTDI_DEBUG
+#define C2_FTDI_DEBUG
 
 #include <stdio.h>
 #include <string.h>
@@ -46,9 +46,14 @@
 #define PIN_DCD 0x40
 #define PIN_RI  0x80
 
-#define PIN_C2CK	PIN_DTR
+#ifdef USE_FT232_RTS
+# define PIN_C2CK	PIN_RTS
+#else
+# define PIN_C2CK	PIN_DTR
+#endif
 #define PIN_C2D		PIN_CTS
-#define BAUD		250000
+//#define BAUD		250000
+#define BAUD		450000
 
 // Bit sequences for INS commands
 // NOTE: LSB is shifted out first!
@@ -379,8 +384,8 @@ int c2_ftdi_reset(struct c2_bus *bus)
 {
 	uint8_t buf[100];
 	int i;
-	int Trd = 250 / (10000000/BAUD) + 1;
-	int Tsd = (Trd/10) + 1;
+	int Trd = 250 / (10000000/BAUD) + 1 + 2;
+	int Tsd = (Trd/10) + 1 + 2;
 
 	assert(Trd + Tsd < sizeof(buf));
 
