@@ -55,5 +55,5 @@ clean:
 		xxd -i < "$<"; \
 		echo "};"; \
 		echo "// Address where to set breakpoint(eg. address of 'loop_breakpoint' label)" ;\
-		sed -n 's/[[:space:]]*00\([[:xdigit:]]*\)[[:space:]]*loop_breakpoint/#define MTP_PROG_BP_ADDR (0x\1)/p' "$*.map"; \
+		sed -n 's/^[[:space:]]*00\([[:xdigit:]]*\)[[:space:]]*loop_breakpoint[[:space:]]*$$/#define MTP_PROG_BP_ADDR (0x\1)/p' "$*.map"; \
 	} > "$@"

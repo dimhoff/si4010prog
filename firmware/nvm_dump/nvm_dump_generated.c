@@ -13,4 +13,4 @@ const unsigned char nvm_dump_prog[] = {
   0xf5, 0x40, 0x80, 0xb1
 };
 // Address where to set breakpoint(eg. address of 'loop_breakpoint' label)
-#define NVM_DUMP_BP_ADDR (0x6E)
+#define NVM_DUMP_BP_ADDR (0x00006E)

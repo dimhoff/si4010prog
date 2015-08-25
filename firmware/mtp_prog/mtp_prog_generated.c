@@ -7,4 +7,4 @@ const unsigned char mtp_prog_fw[] = {
   0xf9, 0x7f, 0x28, 0x12, 0x80, 0x69, 0x8f, 0x40, 0x80, 0xfe
 };
 // Address where to set breakpoint(eg. address of 'loop_breakpoint' label)
-#define MTP_PROG_BP_ADDR (0x00002C)                    
+#define MTP_PROG_BP_ADDR (0x00002C)
