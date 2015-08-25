@@ -23,7 +23,7 @@ clean:
 # The "o" option is mandatory, as the linker requires list, object and symbol files to generate executables. The "ff" and "p" options generate a readable list file. The "g" option tells the assembler to not generate an error if it finds an undefined symbol that is not declared as external.
 #
 %.rel: %.asm
-	asx8051 -loffgp "$<"
+	/usr/bin/sdas8051 -wloffgp "$<"
 
 #
 # Option	Purpose
@@ -35,12 +35,13 @@ clean:
 	{ \
 		echo "-i"; \
 		echo "-m"; \
+		echo "-w"; \
 		echo "-b _DATA = 0x40"; \
 		for f in $^; do \
 			echo $$f ; \
 		done ; \
 		echo -e "\x2de" ; \
-	} | aslink -c; echo; \
+	} | sdld -c; echo; \
 
 %.bin: %.ihx
 	makebin -p < "$<" > "$@"
