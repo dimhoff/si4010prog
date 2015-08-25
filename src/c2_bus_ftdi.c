@@ -48,7 +48,7 @@
 
 #define PIN_C2CK	PIN_DTR
 #define PIN_C2D		PIN_CTS
-#define BAUD		250000
+#define BAUD		450000
 
 // Bit sequences for INS commands
 // NOTE: LSB is shifted out first!
