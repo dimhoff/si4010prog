@@ -96,13 +96,13 @@ void usage_dev_uri()
 		"> c2drv\n"
 		"  This interface uses a standard LPT printer port and the c2drv Linux kernel\n"
 		"  module. The path specifies the device file of the kernel module.\n"
-		"> fx2\n"
+		"> fx2 (Default)\n"
 		"  Cypress EZ-USB FX2 based bus interface. This interface requires a special\n"
 		"  firmware to be loaded into the device. If no path is specified the first FX2\n"
 		"  device found is used. To use a specific USB device the path must be in the\n"
 		"  format 'fx2://BBB/DDD', where 'BBB' is a 3 digit bus number and 'DDD' is the 3\n"
 		"  digit device number as can be obtained with lsusb.\n"
-		"> ft232 (Default)\n"
+		"> ft232\n"
 		"  FTDI FT232R based bus interface. Although easy to use, this interface is\n"
 		"  rather slow. As path string the libftdi description strings are used.\n"
 		"  These strings can have one of the following formats:\n"
@@ -513,7 +513,7 @@ int si4010_nvm_read(uint16_t addr, uint16_t len, uint8_t *buf)
 int main(int argc, char *argv[])
 {
 	int opt;
-	char *c2_bus_type = "ft232";
+	char *c2_bus_type = "fx2";
 	char *c2_bus_path = "";
 
 	bool abort = false;
