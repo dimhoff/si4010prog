@@ -35,9 +35,9 @@
 void uin_init();
 
 /**
- * Write a byte to the usb input stream.
+ * Read a byte from the usb input stream.
  *
- * @param b	pointer to location to store byte
+ * @param c	pointer to location to store byte
  *
  * @returns	1 if byte read, else 0 if reading would block
  */
