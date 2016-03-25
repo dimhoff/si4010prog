@@ -14,6 +14,6 @@ You have to make the following connections between the SI4010 and the FX2:
       FX2                SI4010
 
       3v3 -------------- VCC
-    IOB.1 ----/\1K/\---- C2CLK(/GPIO5)
-    IOB.0 ----/\1K/\---- C2DAT(/GPIO4)
+    IOA.1 ----/\1K/\---- C2CLK(/GPIO5)
+    IOA.2 ----/\1K/\---- C2DAT(/GPIO4)
       GND -------------- GND

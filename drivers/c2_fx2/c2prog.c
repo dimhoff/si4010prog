@@ -35,7 +35,7 @@
 #include "uin.h"
 
 #define PIN_NONE  0x00
-#define PIN_C2D   0x01
+#define PIN_C2D   0x04
 #define PIN_C2CLK 0x02
 
 static void Initialize(void)
@@ -48,17 +48,17 @@ static void Initialize(void)
 	uout_init();
 	uin_init();
 
-	// port b (b.0 = c2d, b.1 = c2clk)
-	IOB = PIN_C2CLK;
-	OEB = PIN_C2CLK;
+	// port A (A.2 = c2d, A.1 = c2clk)
+	IOA = PIN_C2CLK;
+	OEA = PIN_C2CLK;
 }
 
 #define CLOCK_DELAY 
-#define ENABLE_C2D_OUT  OEB = PIN_C2CLK | PIN_C2D
-#define DISABLE_C2D_OUT OEB = PIN_C2CLK
+#define ENABLE_C2D_OUT  OEA = PIN_C2CLK | PIN_C2D
+#define DISABLE_C2D_OUT OEA = PIN_C2CLK
 	
-#define SEND_BIT_0 IOB = PIN_NONE; CLOCK_DELAY; IOB = PIN_C2CLK;           CLOCK_DELAY;
-#define SEND_BIT_1 IOB = PIN_C2D;  CLOCK_DELAY; IOB = PIN_C2CLK | PIN_C2D; CLOCK_DELAY;
+#define SEND_BIT_0 IOA = PIN_NONE; CLOCK_DELAY; IOA = PIN_C2CLK;           CLOCK_DELAY;
+#define SEND_BIT_1 IOA = PIN_C2D;  CLOCK_DELAY; IOA = PIN_C2CLK | PIN_C2D; CLOCK_DELAY;
 
 #define STROBE_CLOCK SEND_BIT_0
 
@@ -66,21 +66,21 @@ unsigned char c2_data[5];
 
 static unsigned char read_bit()
 {
-	IOB = PIN_NONE;
+	IOA = PIN_NONE;
 	CLOCK_DELAY;
-	IOB = PIN_C2CLK;
+	IOA = PIN_C2CLK;
 	CLOCK_DELAY;
-	return (IOB & PIN_C2D) != 0;
+	return (IOA & PIN_C2D) != 0;
 }
 
 void c2_reset()
 {
 	// RESET
-	IOB = PIN_NONE;
+	IOA = PIN_NONE;
 	wait_10us(2);
 	wait_1us();
 	wait_1us();
-	IOB = PIN_C2CLK;
+	IOA = PIN_C2CLK;
 	wait_1us();
 	wait_1us();
 }
