@@ -86,7 +86,7 @@ int c2_c2drv_addr_read(struct c2_bus *bus, unsigned char *addr)
 {
 	struct c2_bus_c2drv_ctx *hw = (struct c2_bus_c2drv_ctx *) bus->ctx;
 
-	ioctl(hw->fd, C2_IOCAREAD, &addr);
+	ioctl(hw->fd, C2_IOCAREAD, addr);
 
 	return 0;
 }
