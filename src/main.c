@@ -68,7 +68,6 @@ void usage(const char *name)
 		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
 		"  dmtp:ADR,LEN   Dump LEN bytes from MTP memory starting at address ADR\n"
 		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
-		"  getpc          Get the value of the PC\n"
 		"  dnvm:ADR,LEN   Dump LEN bytes from NVM memory starting at address ADR\n"
 		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
 		"  getpc          Get the value of the PC\n"
