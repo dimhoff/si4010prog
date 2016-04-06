@@ -1,8 +1,9 @@
-#Kernel module makefile for 2.4.xx kernel
-CC=gcc
-#The line below should consider the location of kernel headers
-# (/usr/src/kernel-headers-2.4.25/include in my case)
-MODCFLAGS := -O2 -I /usr/src/kernel-headers-2.4.25/include -Wall -DMODULE -D__KERNEL__ -DLINUX
-all:	cygnal_c2.o
-cygnal_c2.o: cygnal_c2.c c2_ioctls.h c2_lpt.h
-	$(CC) $(MODCFLAGS) -c cygnal_c2.c
+#Makefile for kernel module for kernel 2.6
+ifneq ($(KERNELRELEASE),)
+    obj-m	:= cygnal_c2.o    
+else
+KDIR	:= /lib/modules/$(shell uname -r)/build
+PWD	:= $(shell pwd)
+default:
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
+endif
