@@ -57,7 +57,6 @@
                                                                                 
 //#include <linux/fs.h>
 //#include <linux/mm.h>
-#include <linux/config.h>
 
 #include <linux/ioport.h>
 #include <linux/poll.h>
