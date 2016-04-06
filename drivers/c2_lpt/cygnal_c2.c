@@ -74,11 +74,14 @@
 #define USE_PNP     // Matt: my LPT hardware needs to be enabled via PNP.
 
 static int io_base=0x378;
-MODULE_PARM(io_base,"i");
+module_param(io_base, int, 0);
+MODULE_PARM_DESC(io_base, "LPT port I/O base address");
 static int irq = 7;
-MODULE_PARM(irq,"i");
+module_param(irq, int, 0);
+MODULE_PARM_DESC(irq, "LPT port IRQ number");
 static int major=0; // requested major number
-MODULE_PARM(major,"i");
+module_param(major, int, 0);
+MODULE_PARM_DESC(major, "C2 device file major number to request");
 
 #define DEVICE_NAME "cygnal"
 static int Major = 0; // assigned major number
