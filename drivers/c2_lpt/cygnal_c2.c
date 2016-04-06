@@ -328,9 +328,13 @@ static int CheckForInterrupts(void)
 /* Here we have the standard functions for the driver */
 
 /* Procedure servicing the ioctl */
-int c2_ioctl (struct inode *inode, struct file *filp,
+long c2_ioctl (struct file *filp,
 	      unsigned int cmd, unsigned long arg)
 {
+//TODO: Locking is probably required since we don't run under BKL anymore.
+//      Although it isn't possible to open the c2 device twice, a single
+//      process with multiple threads might be abble to issue simultaneous
+//      ioctls() --DI
   long buf;
   unsigned char cbuf;
   int err=0,ret;
@@ -427,7 +431,7 @@ struct file_operations Fops = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
   .owner=THIS_MODULE,
 #endif
-  .ioctl=c2_ioctl, /* ioctl */
+  .unlocked_ioctl=c2_ioctl, /* ioctl */
   .open=c2_open,
   .release=c2_release,
 };
