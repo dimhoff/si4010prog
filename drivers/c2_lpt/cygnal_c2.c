@@ -527,8 +527,6 @@ int c2_init(void)
 /* Cleanup when removing the module */
 void c2_exit(void)
 {
-  int ret;
-
   if (irq) {
     free_irq(irq, NULL);
   }
@@ -537,10 +535,7 @@ void c2_exit(void)
 #else
   release_region(io_base,0x10);
 #endif
-  ret = unregister_chrdev(Major, DEVICE_NAME);
-  /* If there's an error, report it */
-  if (ret < 0)
-    printk("<1>Error in unregister_chrdev: %d\n", ret);
+  unregister_chrdev(Major, DEVICE_NAME);
 }
                                                                                 
 module_init(c2_init);
