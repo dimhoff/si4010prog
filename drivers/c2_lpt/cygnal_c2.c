@@ -95,7 +95,7 @@ static void C2CK_low_pulse(void)
   C2CK_HIGH();
   C2CK_ENA_IRQ();
   local_irq_restore(flags);
-  //printk("<1>C2CK pulse\n");
+  //printk(KERN_ERR "C2CK pulse\n");
 }
 
 /* The C2CK_reset function sends the low pulse on the C2CK line long enough to 
@@ -483,9 +483,9 @@ int c2_init(void)
                           &Fops);
   /* Negative values signify an error */
   if (Major < 0) {
-    printk ("<1>%s device failed with %d\n",
-            "Sorry, registering the character",
-            Major);
+    printk (KERN_ERR
+       "cygnal_c2: Failed to register character device with major %d\n",
+        Major);
     return Major;
   }
 
@@ -505,9 +505,9 @@ int c2_init(void)
   if(major) Major=major; /* The register_chrdev returns "0" if
 			    major number was given, and registration
 			    is successfull */
-  printk ("<1>%s The major device number is %d.\n",
-          "Registeration is a success.",
-          Major);
+  printk(KERN_INFO
+     "cygnal_c2: Successfully registered major device number %d\n",
+      Major);
   return 0;
 }
 
