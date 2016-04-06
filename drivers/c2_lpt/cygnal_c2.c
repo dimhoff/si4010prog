@@ -350,32 +350,37 @@ long c2_ioctl (struct file *filp,
   if (err) return -EFAULT;
   switch(_IOC_NR(cmd)) {
   case _IOC_NR(C2_IOCRESET):
+    //printk(KERN_ERR "C2_IOCRESET");
     C2CK_reset();
     return 0;
   case _IOC_NR(C2_IOCAWRITE):
     ret = __get_user(cbuf, (unsigned char *)arg);
+    //printk(KERN_ERR "C2_IOCAWRITE: address=%u\n", cbuf);
     AddressWrite(cbuf);
-    //printk("<1>Zapisalem adres: %d\n",cbuf);
     return ret;
   case _IOC_NR(C2_IOCDWRITE):
     ret = __get_user(buf, (long *)arg);
+    //printk(KERN_ERR "C2_IOCDWRITE: len=%u, data=%u\n", (_IOC_SIZE(cmd)-1) & 3, buf);
     return DataWrite((_IOC_SIZE(cmd)-1) & 3, buf);
   case _IOC_NR(C2_IOCAREAD):
     cbuf=AddressRead();
-    //printk("<1>Odczytalem adres: %d\n",cbuf);
+    //printk(KERN_ERR "C2_IOCAREAD: address=%u\n", cbuf);
     ret = __put_user(cbuf, (unsigned char *)arg);
     return ret;
   case _IOC_NR(C2_IOCDREAD):
     ret = DataRead((_IOC_SIZE(cmd)-1) & 3, &buf);
     if(ret) return ret;
+    //printk(KERN_ERR "C2_IOCDREAD: len=%u, data=%u\n", (_IOC_SIZE(cmd)-1) & 3, buf);
     ret = __put_user(buf, (long *)arg);
     return ret;
   case _IOC_NR(C2_IOCQRESET):
+    //printk(KERN_ERR "C2_IOCQRESET");
     C2CK_ENA();
     C2CK_low_pulse();  /* a "quick reset" is just a low pulse, less than 20us */
     C2CK_DIS();
     return 0;
   case _IOC_NR(C2_IOCIRQCHK):
+    //printk(KERN_ERR "C2_IOCIRQCHK");
     return CheckForInterrupts();
   default:
     return -ENOTTY;
