@@ -46,6 +46,7 @@
 #include <linux/pnp.h>
 #include <linux/interrupt.h>
 #include <linux/version.h>
+#include <linux/sched.h>
 
 //#include <linux/fs.h>
 //#include <linux/mm.h>
