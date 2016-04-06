@@ -46,15 +46,7 @@
 #include <linux/pnp.h>
 #include <linux/interrupt.h>
 #include <linux/version.h>
-                                                                                
-/* Deal with CONFIG_MODVERSIONS */
-#if 0    // Matt: This didn't work when compiling for my 2.6 kernel.
-#if CONFIG_MODVERSIONS==1
-#define MODVERSIONS
-#include <linux/modversions.h>
-#endif
-#endif
-                                                                                
+
 //#include <linux/fs.h>
 //#include <linux/mm.h>
 
@@ -63,9 +55,6 @@
 #include <linux/delay.h>
 #include <linux/spinlock.h>
 #include <asm/io.h>
-#ifndef KERNEL_VERSION
-#define KERNEL_VERSION(a,b,c) ((a)*65536+(b)*256+(c))
-#endif
                                                                                 
 #include <linux/ioctl.h>
 #include <asm/uaccess.h>  /* for put_user */
@@ -400,11 +389,6 @@ static int c2_open(struct inode *inode,
   c2_busy++;
   spin_unlock_irqrestore(&c2_lock, flags);
 
-// Matt: I don't know the exact 2.5.x version where this changed
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-  MOD_INC_USE_COUNT;
-#endif
-
   interrupt_detected = 0;
   C2CK_ENA_IRQ();
 
@@ -420,9 +404,6 @@ static int c2_release(struct inode *inode,
   spin_lock_irqsave(&c2_lock, flags);
   c2_busy--;
   spin_unlock_irqrestore(&c2_lock, flags);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-  MOD_DEC_USE_COUNT;
-#endif
 
   C2CK_DIS_IRQ();
 
@@ -435,9 +416,7 @@ static int c2_release(struct inode *inode,
 
 /* File operations structure - only ioctl, open and release implemented*/                                                                                
 struct file_operations Fops = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
   .owner=THIS_MODULE,
-#endif
   .unlocked_ioctl=c2_ioctl, /* ioctl */
   .open=c2_open,
   .release=c2_release,
