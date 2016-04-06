@@ -375,18 +375,19 @@ int c2_ioctl (struct inode *inode, struct file *filp,
   }
 }
 
-spinlock_t c2_lock = SPIN_LOCK_UNLOCKED;
+static DEFINE_SPINLOCK(c2_lock);
 
 static int c2_open(struct inode *inode,
 		      struct file *file)
 {
-  spin_lock(&c2_lock);
+  unsigned long flags;
+  spin_lock_irqsave(&c2_lock, flags);
   if(c2_busy) {
-    spin_unlock(&c2_lock);
+    spin_unlock_irqrestore(&c2_lock, flags);
     return -EBUSY;
   }
   c2_busy++;
-  spin_unlock(&c2_lock);
+  spin_unlock_irqrestore(&c2_lock, flags);
 
 // Matt: I don't know the exact 2.5.x version where this changed
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
@@ -404,9 +405,10 @@ static int c2_open(struct inode *inode,
 static int c2_release(struct inode *inode,
 			 struct file *file)
 {
-  spin_lock(&c2_lock);
+  unsigned long flags;
+  spin_lock_irqsave(&c2_lock, flags);
   c2_busy--;
-  spin_unlock(&c2_lock);
+  spin_unlock_irqrestore(&c2_lock, flags);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
   MOD_DEC_USE_COUNT;
 #endif
