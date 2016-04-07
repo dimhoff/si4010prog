@@ -26,6 +26,22 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * WARNING: this bus master does not work with current FT232R chips, due to
+ * timing issues!!! I currently have no way or motivation to fix this.
+ * --DI, 2016-04-07
+ *
+ * This is a C2 Bus master implementation for the FTDI FT232R. This is a cheap
+ * and easy to setup bus master. Downside is that it is relatively slow. The
+ * SI4010 is connected to the FT232R according to the following schematic:
+ *
+ *    FT232R                SI4010
+ *
+ *       3v3 -------------- VCC
+ *       DTR ----/\1K/\---- C2CLK(/GPIO5)
+ *       CTS ----/\1K/\---- C2DAT(/GPIO4)
+ *       GND -------------- GND
+ */
 //#define C2_FTDI_DEBUG
 
 #include <stdio.h>
