@@ -8,7 +8,7 @@
  * http://www.ise.pw.edu.pl/~wzab/cygnal/
  *
  * Copyright 2005 Matt Otto <matt@klox.net> - Original c2mon.c
- * Copyright 2008 David Imhoff <dimhoff_devel@xs4all.nl> - SI4010 extensions
+ * Copyright 2008 David Imhoff <dimhoff.devel@gmail.com> - SI4010 extensions
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

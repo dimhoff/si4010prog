@@ -1,7 +1,7 @@
 /*
  * uout.c - FX2 USB output stream.
  *
- * Copyright (c) 2008, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2008, David Imhoff <dimhoff.devel@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without

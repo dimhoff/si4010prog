@@ -2,7 +2,7 @@
  * main.c - Silicon Laboratories SI4010 programmer/debugger. 
  *
  * si4010prog specific code:
- * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2014, David Imhoff <dimhoff.devel@gmail.com>
  *
  * Based on cycfx2prog.cc:
  * Copyright (c) 2006--2009 by Wolfgang Wieser ] wwieser (a) gmx <*> de [ 

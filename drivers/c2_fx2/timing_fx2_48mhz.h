@@ -1,7 +1,7 @@
 /*
  * timing_fx2_48mhz.c - Timing functions for Cypress EZ-USB FX2 @ 48 MHz
  *
- * Copyright (c) 2012, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2012, David Imhoff <dimhoff.devel@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without

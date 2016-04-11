@@ -1,7 +1,7 @@
 /*
  * c2-gpio - GPIO Silicon Labs C2 Bus master driver
  *
- * Copyright (c) 2016, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2016, David Imhoff <dimhoff.devel@gmail.com>
  * Copyright (c) Wojciech M. Zabolotny <wzab@ise.pw.edu.pl> (Original author)
  *
  * The code is partially based on examples from the book written

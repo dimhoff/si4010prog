@@ -1,7 +1,7 @@
 /**
  * c2_bus_ftdi.h - FTDI FT232R based SiLabs C2 programmer control functions
  *
- * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2014, David Imhoff <dimhoff.devel@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

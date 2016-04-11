@@ -4,7 +4,7 @@
  * NOTE: This program is only written for testing purpose... Don't expect too
  * much from it.
  *
- * Copyright (c) 2014, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2014, David Imhoff <dimhoff.devel@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

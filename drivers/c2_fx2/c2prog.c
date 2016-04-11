@@ -1,7 +1,7 @@
 /*
  * c2prog.c - FX2 C2 Bus Master Interface
  *
- * Copyright (c) 2012, David Imhoff <dimhoff_devel@xs4all.nl>
+ * Copyright (c) 2012, David Imhoff <dimhoff.devel@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
