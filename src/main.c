@@ -14,6 +14,8 @@
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+#include "config.h"
+
 #define  _XOPEN_SOURCE 500 
 #include <stdio.h>
 #include <stdint.h>
@@ -92,15 +94,20 @@ void usage_dev_uri()
 		"The URI format is: '<interface type>://<interface specific path>'\n"
 		"Below is a list of valid interface type names with a description.\n"
 		"\n"
+#ifdef WITH_C2_BUS_C2DRV
 		"> c2drv\n"
 		"  This interface uses a standard LPT printer port and the c2drv Linux kernel\n"
 		"  module. The path specifies the device file of the kernel module.\n"
+#endif // WITH_C2_BUS_C2DRV
+#ifdef WITH_C2_BUS_FX2
 		"> fx2 (Default)\n"
 		"  Cypress EZ-USB FX2 based bus interface. This interface requires a special\n"
 		"  firmware to be loaded into the device. If no path is specified the first FX2\n"
 		"  device found is used. To use a specific USB device the path must be in the\n"
 		"  format 'fx2://BBB/DDD', where 'BBB' is a 3 digit bus number and 'DDD' is the 3\n"
 		"  digit device number as can be obtained with lsusb.\n"
+#endif // WITH_C2_BUS_FX2
+#ifdef WITH_C2_BUS_FT232
 		"> ft232\n"
 		"  FTDI FT232R based bus interface. Although easy to use, this interface is\n"
 		"  rather slow. As path string the libftdi description strings are used.\n"
@@ -117,6 +124,7 @@ void usage_dev_uri()
 		"   - s:<vendor>:<product>:<serial>\n"
 		"     First device with given vendor id, product id and serial string\n"
 		"  By default the path \"ftdi://d:0x0403:0x6001\" is used\n"
+#endif // WITH_C2_BUS_FT232
 		);
 }
 

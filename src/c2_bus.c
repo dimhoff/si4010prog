@@ -28,6 +28,8 @@
  */
 //#define C2_DEBUG
 
+#include "config.h"
+
 #ifdef C2_DEBUG
 # include <stdio.h>
 #endif
@@ -72,13 +74,21 @@ int c2_bus_open(struct c2_bus *bus, const char *type, const char *path)
 {
 	memset(bus, 0, sizeof(struct c2_bus));
 
+#ifdef WITH_C2_BUS_FX2
 	if (strcmp(type, "fx2") == 0) {
 		return c2_bus_fx2_init(bus, path);
-	} else if (strcmp(type, "ft232") == 0) {
+	}
+#endif // WITH_C2_BUS_FX2
+#ifdef WITH_C2_BUS_FT232
+	if (strcmp(type, "ft232") == 0) {
 		return c2_bus_ftdi_init(bus, path);
-	} else if (strcmp(type, "c2drv") == 0) {
+	}
+#endif // WITH_C2_BUS_FT232
+#ifdef WITH_C2_BUS_C2DRV
+	if (strcmp(type, "c2drv") == 0) {
 		return c2_bus_c2drv_init(bus, path);
 	}
+#endif // WITH_C2_BUS_C2DRV
 
 	c2_bus_set_error(bus, "Unknown C2 bus type");
 	return 1;
