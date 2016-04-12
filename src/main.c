@@ -15,6 +15,7 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include "config.h"
+#include "version.h"
 
 #define  _XOPEN_SOURCE 500 
 #include <stdio.h>
@@ -32,8 +33,6 @@
 #include "dehexify.h"
 #include "si4010.h"
 
-#define VERSION "0.1"
-
 #define MAXARGS 16 //< Maximum number of subarguments for a command argument 
 
 bool just_say_yes = false;
@@ -41,7 +40,7 @@ bool just_say_yes = false;
 void usage(const char *name)
 {
 	fprintf(stderr,
-		"SI-4010 ISP Programmer tool %s\n"
+		"Si4010 ISP Programmer tool - %s\n"
 		"Usage: %s [options] <commands...>\n"
 		"Options:\n"
 //		"  -b             Use binary output when dumping data\n"
