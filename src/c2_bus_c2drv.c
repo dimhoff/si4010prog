@@ -50,6 +50,10 @@ int c2_bus_c2drv_init(struct c2_bus *bus, const char *path)
 		return -1;
 	}
 
+	if (path[0] == '\0') {
+		path = "/dev/c2_bus";
+	}
+
 	hw->fd = open(path, O_RDWR);
 	if (hw->fd < 0) {
 		c2_bus_set_perror(bus, "Unable to open device file");
