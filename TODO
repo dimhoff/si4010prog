@@ -4,7 +4,9 @@ generic
 - test function that checks if bus works and requests/checks the device product ID's
 - Direct load NBF files
 - write man page
-- CMake build scripts
+- quiet, and binary output options for easy dumping of memory to binary file
+- Allow formatted output with c2_bus_set_error()
+- Implement: lram, lxram
 
 breakpoints
 -----------
@@ -13,9 +15,12 @@ breakpoints
 
 bus
 ---
-- GPIO based bus master as replacement for deprecated LPT port
-- Fix LPT based bus master(c2drv) to work with modern kernel
+- Update C2_GPIO to be more like a modern kernel module, like:
+  - Use device tree
+  - Register device file so it is automatically created
+- Fix LPT based bus master(c2drv) to work with modern kernel (no prio, since LPT is kinda dead)
 
 ft232
 -----
 - Find out why 'halt' doesn't work after loading code
+- Error reporting should include libftdi error message (extend c2_bus_set_error() first)

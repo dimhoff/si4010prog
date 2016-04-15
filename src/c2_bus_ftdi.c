@@ -1,5 +1,5 @@
 /**
- * c2_bus_ftdi.c - FTDI FT232R based SiLabs C2 programmer control functions
+ * c2_bus_ftdi.c - FTDI FT232 based SiLabs C2 programmer control functions
  *
  * Copyright (c) 2014, David Imhoff <dimhoff.devel@gmail.com>
  * All rights reserved.
@@ -25,22 +25,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-/*
- * WARNING: this bus master does not work with current FT232R chips, due to
- * timing issues!!! I currently have no way or motivation to fix this.
- * --DI, 2016-04-07
- *
- * This is a C2 Bus master implementation for the FTDI FT232R. This is a cheap
- * and easy to setup bus master. Downside is that it is relatively slow. The
- * SI4010 is connected to the FT232R according to the following schematic:
- *
- *    FT232R                SI4010
- *
- *       3v3 -------------- VCC
- *       DTR ----/\1K/\---- C2CLK(/GPIO5)
- *       CTS ----/\1K/\---- C2DAT(/GPIO4)
- *       GND -------------- GND
  */
 //#define C2_FTDI_DEBUG
 
@@ -142,14 +126,14 @@ int c2_bus_ftdi_init(struct c2_bus *bus, const char *path)
 
 	if (path[0] != '\0') {
 		if (ftdi_usb_open_string(hw->ftdi, path) < 0) {
-			//c2_bus_set_error(bus, "ftdi_usb_open_string failed: %s\n", 
+			//TODO: c2_bus_set_error(bus, "ftdi_usb_open_string failed: %s\n", 
 			//		ftdi_get_error_string(&ftdic));
 			c2_bus_set_error(bus, "ftdi_usb_open_string failed");
 			goto bad2;
 		}
 	} else {
 		if (ftdi_usb_open_desc(hw->ftdi, 0x0403, 0x6014, NULL, NULL) < 0) {
-			//c2_bus_set_error(bus, "ftdi_usb_open_desc failed: %s\n", 
+			//TODO: c2_bus_set_error(bus, "ftdi_usb_open_desc failed: %s\n", 
 			//		ftdi_get_error_string(&ftdic));
 			c2_bus_set_error(bus, "ftdi_usb_open_desc failed");
 			goto bad2;
@@ -157,13 +141,13 @@ int c2_bus_ftdi_init(struct c2_bus *bus, const char *path)
 	}
 
 	if (ftdi_set_baudrate(hw->ftdi, BAUD / 16) < 0) {
-		//c2_bus_set_error(bus, "ftdi_set_baudrate failed: %s\n", ftdi_get_error_string(&ftdic));
+		//TODO: c2_bus_set_error(bus, "ftdi_set_baudrate failed: %s\n", ftdi_get_error_string(&ftdic));
 		c2_bus_set_error(bus, "ftdi_set_baudrate failed");
 		goto bad3;
 	}
 
 	if (ftdi_set_bitmode(hw->ftdi, PIN_C2CK, BITMODE_SYNCBB) < 0) {
-		//c2_bus_set_error(bus, "ftdi_set_bitmode failed: %s\n", ftdi_get_error_string(&ftdic));
+		//TODO: c2_bus_set_error(bus, "ftdi_set_bitmode failed: %s\n", ftdi_get_error_string(&ftdic));
 		c2_bus_set_error(bus, "ftdi_set_bitmode failed");
 		goto bad3;
 	}

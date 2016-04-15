@@ -43,9 +43,9 @@ void usage(const char *name)
 		"Si4010 ISP Programmer tool - %s\n"
 		"Usage: %s [options] <commands...>\n"
 		"Options:\n"
-//		"  -b             Use binary output when dumping data\n"
+//TODO:		"  -b             Use binary output when dumping data\n"
 		"  -d <uri>       Programmer device to use. Use 'help' for help.\n"
-//		"  -q             Quiet\n"
+//TODO:		"  -q             Quiet\n"
 		"  -y             Answer 'Yes' to all questions, possibly destroying data\n"
 		"  -h             Print this help message\n"
 		"Commands:\n"
@@ -95,8 +95,8 @@ void usage_dev_uri()
 		"\n"
 #ifdef WITH_C2_BUS_C2DRV
 		"> c2drv\n"
-		"  This interface uses a standard LPT printer port and the c2drv Linux kernel\n"
-		"  module. The path specifies the device file of the kernel module.\n"
+		"  This interface uses the C2 Linux Kernel module.\n"
+		"  The path specifies the device file of the kernel module.\n"
 #endif // WITH_C2_BUS_C2DRV
 #ifdef WITH_C2_BUS_FX2
 		"> fx2 (Default)\n"
@@ -108,12 +108,12 @@ void usage_dev_uri()
 #endif // WITH_C2_BUS_FX2
 #ifdef WITH_C2_BUS_FT232
 		"> ft232\n"
-		"  FTDI FT232R based bus interface. Although easy to use, this interface is\n"
+		"  FTDI FT232 based bus interface. Although easy to use, this interface is\n"
 		"  rather slow. As path string the libftdi description strings are used.\n"
 		"  These strings can have one of the following formats:\n"
-                "   - d:<devicenode>\n"
-		"     path of bus and device-node (e.g. \"003/001\") within usb device tree\n"
-		"     (usually at /proc/bus/usb/)\n"
+                "   - d:<bus#>/<device#>\n"
+		"     Bus and device number as show by lsusb and used in /dev/bus/usb/. Numbers\n"
+		"     are prepended with 0s to 3 digits (eg. \"003/001\").\n"
 		"   - i:<vendor>:<product>\n"
 		"     First device with given vendor and product id, ids can be decimal, octal\n"
 		"     (preceded by \"0\") or hex (preceded by \"0x\")\n"
@@ -122,7 +122,7 @@ void usage_dev_uri()
 		"     there are more than one\n"
 		"   - s:<vendor>:<product>:<serial>\n"
 		"     First device with given vendor id, product id and serial string\n"
-		"  By default the path \"ftdi://d:0x0403:0x6001\" is used\n"
+		"  By default the path \"ft232://i:0x0403:0x6014\" is used\n"
 #endif // WITH_C2_BUS_FT232
 		);
 }

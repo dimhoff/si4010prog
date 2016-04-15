@@ -1,5 +1,5 @@
 /**
- * c2_bus_c2drv.c - SiLabs C2 master bus interface using Linux LPT port driver 
+ * c2_bus_c2drv.c - SiLabs C2 master bus interface using Linux kernel module
  *
  * Based on code written by Wojciech M. Zabolotny (wzab@ise.pw.edu.pl)
  * and is published under the GPL (Gnu Public License) version 2.0 or later

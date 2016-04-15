@@ -11,8 +11,7 @@ with the C2 bus.
  * Cypress FX2: The best tested interface. See drivers/c2_fx2/README.md
  * Linux GPIO: Driver using Linux GPIO. See drivers/c2_gpio/README.md
  * Linux LPT: Deprecated, LPT port base bus master
- * FT232R: C2 bus using the FT232R chip. Currently not working due to timing
-   issues. See src/c2_bus_ftdi.c
+ * FT232: C2 bus using the FT232(H) chip. See drivers/c2_ft232/README.md
 
 See the drivers/ directory for more available bus masters, or run _si4010prog -d
 help_ to get a full list of available bus masters.
@@ -22,7 +21,7 @@ Known Issues
 - Currently there is no way to check if the micro controller is running. 
 - Issuing a halt command when micro controller already halted cause protocol
   break. This can only be fixed by doing a 'reset'.
-- Timing of official FT232R chips is broken
+- Timing of official FT232R(L) chips is broken
 
 Usage Examples
 --------------
