@@ -16,6 +16,17 @@ with the C2 bus.
 See the drivers/ directory for more available bus masters, or run _si4010prog -d
 help_ to get a full list of available bus masters.
 
+Compiling the Software
+----------------------
+To compile si4010prog run:
+
+    cd build
+    cmake ../
+    make
+
+Optionally you can configure the build to enable/disable some features using
+ccmake or similar cmake gui.
+
 Known Issues
 ------------
 - Currently there is no way to check if the micro controller is running. 
