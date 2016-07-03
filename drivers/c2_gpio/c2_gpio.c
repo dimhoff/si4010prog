@@ -18,6 +18,7 @@
 #include <linux/interrupt.h>
 #include <linux/version.h>
 #include <linux/sched.h>
+#include <linux/miscdevice.h>
 
 #include <linux/poll.h>
 #include <linux/delay.h>
@@ -30,17 +31,16 @@
 
 #include "c2_ioctls.h"
 
+// TODO: use device tree instead
 static int gpio_c2ck = 17;
 module_param(gpio_c2ck, int, 0);
 MODULE_PARM_DESC(gpio_c2ck, "C2 Clock GPIO pin number");
 static int gpio_c2d = 18;
 module_param(gpio_c2d, int, 0);
 MODULE_PARM_DESC(gpio_c2d, "C2 Data GPIO pin number");
-static int major=0; // requested major number
-//MODULE_PARM(major,"i");
 
-#define DEVICE_NAME "c2_gpio"
-static int Major = 0; // assigned major number
+#define C2_MODULE_NAME "c2_gpio"
+#define C2_DEVICE_NAME "c2_bus"
 
 static int c2_busy=0;
 
@@ -127,7 +127,7 @@ static inline void C2CK_ENA_IRQ(void)
   result = request_irq(irqNumber,             // The interrupt number requested
                        (irq_handler_t) c2ck_irq_handler, // The pointer to the handler function below
                        IRQF_TRIGGER_RISING,   // Interrupt on rising edge (button press, not release)
-                       "c2_gpio",    // Used in /proc/interrupts to identify the owner
+                       C2_MODULE_NAME,    // Used in /proc/interrupts to identify the owner
                        NULL);
 #endif
 }
@@ -494,28 +494,29 @@ struct file_operations Fops = {
   .release=c2_release,
 };
 
+static struct miscdevice c2_miscdev = {
+  .minor = MISC_DYNAMIC_MINOR,
+  .name = C2_DEVICE_NAME,
+  .fops = &Fops,
+};
 
 /* Initialization */
 int c2_init(void)
 {
-  /* Register the character device (at least try) */
-  Major = register_chrdev(major,
-                          DEVICE_NAME,
-                          &Fops);
-  /* Negative values signify an error */
-  if (Major < 0) {
-    printk (KERN_ERR
-       "c2_gpio: Failed to register character device with major %d\n",
-        Major);
-    return Major;
+  int err;
+
+  err = misc_register(&c2_miscdev);
+  if (err) {
+    printk (KERN_ERR C2_MODULE_NAME
+       ": Failed to register misc device (rc: %d)\n",
+        err);
+    return err;
   }
 
-  if(major) Major=major; /* The register_chrdev returns "0" if
-			    major number was given, and registration
-			    is successfull */
-  printk(KERN_INFO
-     "c2_gpio: Successfully registered major device number %d\n",
-      Major);
+  printk(KERN_INFO C2_MODULE_NAME
+     ": Successfully registered minor device number %d\n",
+      c2_miscdev.minor);
+
   return 0;
 }
 
@@ -527,7 +528,7 @@ void c2_exit(void)
     free_irq(irq, NULL);
   }
 #endif
-  unregister_chrdev(Major, DEVICE_NAME);
+  misc_deregister(&c2_miscdev);
 }
 
 module_init(c2_init);
