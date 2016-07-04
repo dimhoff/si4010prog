@@ -11,7 +11,7 @@ if (WITH_C2_BUS_C2DRV)
 	list(APPEND C2_BUS_SOURCES "c2_bus_c2drv.c")
 endif (WITH_C2_BUS_C2DRV)
 
-add_executable(si4010prog main.c si4010.c c2_bus.c ${C2_BUS_SOURCES} dehexify.c)
+add_executable(si4010prog main.c si4010.c c2_bus.c ${C2_BUS_SOURCES} dehexify.c file_slurp.c)
 add_dependencies(si4010prog git_version)
 target_link_libraries(si4010prog ${C2_BUS_LIBRARIES})
 

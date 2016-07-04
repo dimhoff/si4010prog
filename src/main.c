@@ -32,6 +32,7 @@
 
 #include "dehexify.h"
 #include "si4010.h"
+#include "file_slurp.h"
 
 #define MAXARGS 16 //< Maximum number of subarguments for a command argument 
 
@@ -675,8 +676,35 @@ int main(int argc, char *argv[])
 				free(buf);
 			}
 		} else if (!strcmp(cmd, "lram")) {
-//TODO: load data from file to ram at address
-			fprintf(stderr, "TODO:\n");
+			int adr = -1;
+			const char *file;
+			if (args[0] && *args[0])  {  adr = strtol(args[0],NULL,0);  }
+			file = args[1];
+			if (adr < 0 || adr >= SI4010_RAM_SIZE) {
+				fprintf(stderr, "Command 'lram': Address out-of-range(0-0x%x)\n", SI4010_RAM_SIZE);
+				++errors;
+			} else if (!file) {
+				fprintf(stderr, "Command 'lram': requires file to download\n");
+				++errors;
+			} else {
+				unsigned char buf[SI4010_RAM_SIZE];
+				ssize_t len;
+
+				len = file_slurp(file, buf, sizeof(buf));
+				if (len < 0) {
+					fprintf(stderr, "Command 'lram': Failed to read file\n");
+					++errors;
+				} else if (len > SI4010_RAM_SIZE - adr) {
+					fprintf(stderr, "Command 'lram': Data file does not fit RAM at given address\n");
+					++errors;
+				} else {
+					fprintf(stderr, "Loading RAM bytes at 0x%.2x-0x%.2zx from %s\n", adr, adr + len, file);
+					if (si4010_ram_write(adr, len, buf) != 0) {
+						fprintf(stderr, "Unable to write RAM\n");
+						++errors;
+					}
+				}
+			}
 		} else if (!strcmp(cmd, "dram")) {
 			int adr = 0;
 			int len = 1;
@@ -725,8 +753,35 @@ int main(int argc, char *argv[])
 				free(buf);
 			}
 		} else if (!strcmp(cmd, "lxram")) {
-//TODO: load data from file to xram at address
-			fprintf(stderr, "TODO:\n");
+			int adr = -1;
+			const char *file;
+			if (args[0] && *args[0])  {  adr = strtol(args[0],NULL,0);  }
+			file = args[1];
+			if (adr < 0 || adr >= SI4010_XRAM_SIZE) {
+				fprintf(stderr, "Command 'lxram': Address out-of-range(0-0x%x)\n", SI4010_XRAM_SIZE);
+				++errors;
+			} else if (!file) {
+				fprintf(stderr, "Command 'lxram': requires file to download\n");
+				++errors;
+			} else {
+				unsigned char buf[SI4010_XRAM_SIZE];
+				ssize_t len;
+
+				len = file_slurp(file, buf, sizeof(buf));
+				if (len < 0) {
+					fprintf(stderr, "Command 'lxram': Failed to read file\n");
+					++errors;
+				} else if (len > SI4010_XRAM_SIZE - adr) {
+					fprintf(stderr, "Command 'lxram': Data file does not fit XRAM at given address\n");
+					++errors;
+				} else {
+					fprintf(stderr, "Loading XRAM bytes at 0x%.2x-0x%.2zx from %s\n", adr, adr + len, file);
+					if (si4010_xram_write(adr, len, buf) != 0) {
+						fprintf(stderr, "Unable to write XRAM\n");
+						++errors;
+					}
+				}
+			}
 		} else if (!strcmp(cmd, "dxram")) {
 			int adr = 0;
 			int len = 1;

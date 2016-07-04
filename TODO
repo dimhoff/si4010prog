@@ -6,7 +6,6 @@ generic
 - write man page
 - quiet, and binary output options for easy dumping of memory to binary file
 - Allow formatted output with c2_bus_set_error()
-- Implement: lram, lxram
 
 breakpoints
 -----------
