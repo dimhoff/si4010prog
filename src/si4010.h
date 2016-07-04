@@ -46,6 +46,6 @@ int si4010_sfr_write(uint8_t addr, uint8_t len, const void *buf);
 int si4010_ram_read(uint8_t addr, uint8_t len, void *buf);
 int si4010_ram_write(uint8_t addr, uint8_t len, const void *buf);
 int si4010_xram_read(uint16_t addr, size_t len, void *buf);
-int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf);
+int si4010_xram_write(uint16_t addr, size_t len, const void *buf);
 
 #endif // __SI4010_H__

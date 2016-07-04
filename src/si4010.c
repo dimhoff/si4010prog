@@ -423,7 +423,7 @@ int si4010_xram_read(uint16_t addr, size_t len, void *buf)
 	return 0;
 }
 
-int si4010_xram_write(uint16_t addr, uint8_t len, const void *buf)
+int si4010_xram_write(uint16_t addr, size_t len, const void *buf)
 {
 	uint8_t *bbuf = (uint8_t *) buf;
 	size_t blen;
