@@ -26,6 +26,11 @@
 
 #include "c2_bus.h"
 
+#define SI4010_RAM_SIZE  0x100
+#define SI4010_XRAM_SIZE 0x1000
+#define SI4010_NVM_SIZE  0x2000
+#define SI4010_MTP_SIZE  0x10
+
 int si4010_init(struct c2_bus *bus);
 uint16_t c2_get_chip_version();
 int si4010_reset();

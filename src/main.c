@@ -306,8 +306,6 @@ int ProgramIHexFile(const char *path)
 #include "../firmware/mtp_prog/mtp_prog_generated.c"
 // Address in ram where parameters to MTP_Prog are passed
 #define MTP_PROG_PARAM_ADDR 0x40
-// Size of MTP memory
-#define MTP_SIZE 16
 // Si4010 ROM abMTP_RDATA XREG address
 #define ADDR_abMTP_RDATA 0x4040
 
@@ -329,11 +327,11 @@ enum {
  * @param wlen	Amount of bytes to write. Use 0 to only read from MTP.
  * @param wbuf	Pointer to buffer containing data to write. Can be NULL if len
  *		is 0.
- * @param rbuf	Pointer to buffer of MTP_SIZE bytes to read final MTP content
- *		in. Can be NULL to only write the MTP.
+ * @param rbuf	Pointer to buffer of SI4010_MTP_SIZE bytes to read final MTP
+ * 		content in. Can be NULL to only write the MTP.
  */
 int si4010_mtp_read_write(uint8_t waddr, uint8_t wlen, uint8_t *wbuf,
-				uint8_t rbuf[MTP_SIZE])
+				uint8_t rbuf[SI4010_MTP_SIZE])
 {
 	assert(waddr < 16);
 	assert(wlen <= 16);
@@ -344,7 +342,7 @@ int si4010_mtp_read_write(uint8_t waddr, uint8_t wlen, uint8_t *wbuf,
 		uint8_t result;
 		uint8_t offset;
 		uint8_t len;
-		uint8_t data[MTP_SIZE];
+		uint8_t data[SI4010_MTP_SIZE];
 	} mtp_prog_param = { MTP_PROG_RESULT_INVALID, waddr, wlen, { 0 } };
 #pragma pack()
 	if (wlen != 0) {
@@ -404,7 +402,7 @@ int si4010_mtp_read_write(uint8_t waddr, uint8_t wlen, uint8_t *wbuf,
 	}
 
 	if (rbuf != NULL) {
-		if (si4010_xram_read(ADDR_abMTP_RDATA, MTP_SIZE, rbuf) != 0) {
+		if (si4010_xram_read(ADDR_abMTP_RDATA, SI4010_MTP_SIZE, rbuf) != 0) {
 			fprintf(stderr, "Unable to read/write MTP: "
 					"Could read MTP content from XRAM\n");
 			goto fail;
@@ -787,7 +785,7 @@ int main(int argc, char *argv[])
 				}
 			}
 		} else if (!strcmp(cmd, "wmtp")) {
-			uint8_t buf[MTP_SIZE] = { 0 };
+			uint8_t buf[SI4010_MTP_SIZE] = { 0 };
 			int adr = -1;
 			int len = -1;
 			if (args[0] && *args[0]) { adr = strtol(args[0],NULL,0); }
@@ -851,7 +849,7 @@ int main(int argc, char *argv[])
 					}
 				}
 				if (! abort) {
-					uint8_t buf[MTP_SIZE] = { 0 };
+					uint8_t buf[SI4010_MTP_SIZE] = { 0 };
 					if (si4010_mtp_read_write(0, 0, NULL, buf) == 0) {
 						HexDumpBuffer(stdout, &buf[adr], len, /*with_ascii=*/1);
 					} else {
@@ -864,13 +862,13 @@ int main(int argc, char *argv[])
 			int len = 16;
 			if (args[0] && *args[0]) { adr = strtol(args[0],NULL,0); }
 			if (args[1] && *args[1]) { len = strtol(args[1],NULL,0); }
-			if (adr < 0 || adr >= 0x2000) {
-				fprintf(stderr, "Command 'dnvm': Address out-of-range(0-0x2000)\n");
+			if (adr < 0 || adr >= SI4010_NVM_SIZE) {
+				fprintf(stderr, "Command 'dnvm': Address out-of-range(0-0x%x)\n", SI4010_NVM_SIZE);
 				++errors;
 			} else if (len < 0) {
 				fprintf(stderr, "Command 'dnvm': Length too small\n");
 				++errors;
-			} else if (len > 0x2000 - adr) {
+			} else if (len > SI4010_NVM_SIZE - adr) {
 				fprintf(stderr, "Command 'dnvm': Length too big\n");
 				++errors;
 			} else {
