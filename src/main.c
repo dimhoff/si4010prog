@@ -997,7 +997,11 @@ int main(int argc, char *argv[])
 				si4010_bp_clear_all();
 			}
 		} else if(!strcmp(cmd, "waitbreak")) {
-			fprintf(stderr, "TODO:\n");
+			fprintf(stderr,
+				"TODO: Implement\n"
+				"Breakpoint trigger detection is currently not supported by si4010prog and most\n"
+				"c2 bus drivers. I currently don't expect this to change any time soon.\n");
+			++errors;
 		} else if(!strcmp(cmd, "delay")) {
 			long delay=-1;
 			if(args[0] && *args[0]) {  delay=strtol(args[0], NULL, 0);  }
