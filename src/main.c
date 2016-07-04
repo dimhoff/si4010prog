@@ -177,7 +177,7 @@ static void HexDumpBuffer(FILE *out,const unsigned char *data,size_t size,
 		}
 #endif
 		
-		printf("  0x%04zx ",i);
+		printf("%07zx: ",i);
 		size_t oldi=i;
 		for(j=0; j<32 && i<size; j++,i++)
 		{
@@ -190,7 +190,7 @@ static void HexDumpBuffer(FILE *out,const unsigned char *data,size_t size,
 			for(; j<32; j++)
 			{  printf((j && !(j%8)) ? "   " : "  ");  }
 			
-			printf("    ");
+			printf("  ");
 			i=oldi;
 			for(j=0; j<32 && i<size; j++,i++)
 			{  _HexdumpPutChar(out,data[i]);  }
