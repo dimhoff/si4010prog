@@ -58,7 +58,7 @@ const char *c2_bus_get_error(struct c2_bus *bus);
 int c2_bus_open(struct c2_bus *bus, const char *type, const char *path);
 
 /**
- * Issue Reset 
+ * Issue Reset
  *
  * Causes attached device to reset.
  */

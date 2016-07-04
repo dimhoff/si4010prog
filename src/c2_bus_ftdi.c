@@ -126,14 +126,14 @@ int c2_bus_ftdi_init(struct c2_bus *bus, const char *path)
 
 	if (path[0] != '\0') {
 		if (ftdi_usb_open_string(hw->ftdi, path) < 0) {
-			//TODO: c2_bus_set_error(bus, "ftdi_usb_open_string failed: %s\n", 
+			//TODO: c2_bus_set_error(bus, "ftdi_usb_open_string failed: %s\n",
 			//		ftdi_get_error_string(&ftdic));
 			c2_bus_set_error(bus, "ftdi_usb_open_string failed");
 			goto bad2;
 		}
 	} else {
 		if (ftdi_usb_open_desc(hw->ftdi, 0x0403, 0x6014, NULL, NULL) < 0) {
-			//TODO: c2_bus_set_error(bus, "ftdi_usb_open_desc failed: %s\n", 
+			//TODO: c2_bus_set_error(bus, "ftdi_usb_open_desc failed: %s\n",
 			//		ftdi_get_error_string(&ftdic));
 			c2_bus_set_error(bus, "ftdi_usb_open_desc failed");
 			goto bad2;

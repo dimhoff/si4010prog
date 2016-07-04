@@ -1,23 +1,23 @@
 /*
- * main.c - Silicon Laboratories SI4010 programmer/debugger. 
+ * main.c - Silicon Laboratories SI4010 programmer/debugger.
  *
  * si4010prog specific code:
  * Copyright (c) 2014, David Imhoff <dimhoff.devel@gmail.com>
  *
  * Based on cycfx2prog.cc:
- * Copyright (c) 2006--2009 by Wolfgang Wieser ] wwieser (a) gmx <*> de [ 
- * 
- * This file may be distributed and/or modified under the terms of the 
- * GNU General Public License version 2 as published by the Free Software 
+ * Copyright (c) 2006--2009 by Wolfgang Wieser ] wwieser (a) gmx <*> de [
+ *
+ * This file may be distributed and/or modified under the terms of the
+ * GNU General Public License version 2 as published by the Free Software
  * Foundation. (See COPYING.GPL for details.)
- * 
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include "config.h"
 #include "version.h"
 
-#define  _XOPEN_SOURCE 500 
+#define  _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -34,7 +34,7 @@
 #include "si4010.h"
 #include "file_slurp.h"
 
-#define MAXARGS 16 //< Maximum number of subarguments for a command argument 
+#define MAXARGS 16 //< Maximum number of subarguments for a command argument
 
 bool just_say_yes = false;
 
@@ -184,7 +184,7 @@ static void HexDumpBuffer(FILE *out,const unsigned char *data,size_t size,
 			if(j && !(j%8))  printf(" ");
 			printf("%02x",(unsigned int)data[i]);
 		}
-		// This adds a plaintext column (printable chars only): 
+		// This adds a plaintext column (printable chars only):
 		if(with_ascii)
 		{
 			for(; j<32; j++)
@@ -255,7 +255,7 @@ int _ProgramIHexLine(const char *buf, const char *path, int line)
 			return 1;
 		}
 	} else if (type == 1) {
-		// EOF marker. Oh well, trust it. 
+		// EOF marker. Oh well, trust it.
 		return -1;
 	} else {
 		fprintf(stderr, "%s:%d: Unknown entry type %d\n", path, line, type);
@@ -579,10 +579,10 @@ int main(int argc, char *argv[])
 
 	// execute commands
 	while (optind < argc && (ignore_errors || errors == 0) && !abort) {
-		// Copy command and args so that we can manipulate it. 
+		// Copy command and args so that we can manipulate it.
 		char *cmd = strdup(argv[optind]);
 		
-		// Cut into command and arguments: 
+		// Cut into command and arguments:
 		char *args[MAXARGS] = { NULL };
 		char *first_arg = NULL;
 		int nargs=0;
@@ -605,7 +605,7 @@ int main(int argc, char *argv[])
 		}
 		
 #if 0
-		// Debug: 
+		// Debug:
 		printf("Command: <%s>",cmd);
 		for(int j=0; j<nargs; j++)
 		{  printf(" <%s>",args[j]);  }
@@ -651,9 +651,9 @@ int main(int argc, char *argv[])
 			int len = -1;
 			if (args[0] && *args[0])  {  adr = strtol(args[0],NULL,0);  }
 			if (args[1] && *args[1])  {  len = strlen(args[1]); }
-			if (adr < 0 || adr > 0xffff) { 
+			if (adr < 0 || adr > 0xffff) {
 				fprintf(stderr, "Command 'wram': Address out-of-range(0-0xffff)\n");
-				++errors; 
+				++errors;
 			} else if (len < 0) {
 				fprintf(stderr, "Command 'wram': Missing VAL\n");
 				++errors;
@@ -730,7 +730,7 @@ int main(int argc, char *argv[])
 			if (args[1] && *args[1])  {  len = strlen(args[1]); }
 			if (adr < 0 || adr > 0xffff) { //TODO: use correct memory range for si4010
 				fprintf(stderr, "Command 'wxram': Address out-of-range(0-0xffff)\n");
-				++errors; 
+				++errors;
 			} else if (len < 0) {
 				fprintf(stderr, "Command 'wxram': Missing VAL\n");
 				++errors;
@@ -805,10 +805,10 @@ int main(int argc, char *argv[])
 			int val=-1;
 			if (args[0] && *args[0])  {  adr=strtol(args[0],NULL,0);  }
 			if (args[1] && *args[1])  {  val=strtol(args[1],NULL,0);  }
-			if (adr < 0x80 || adr > 0xff || val < 0 || val > 0xff) { 
+			if (adr < 0x80 || adr > 0xff || val < 0 || val > 0xff) {
 				fprintf(stderr,"Command 'wsfr': Illegal/missing address "
 						"and/or value.\n");
-				++errors; 
+				++errors;
 			} else {
 				uint8_t bval = val;
 				fprintf(stderr, "Setting SFR at 0x%.2x to 0x%.2x\n", adr, val);
@@ -824,9 +824,9 @@ int main(int argc, char *argv[])
 			if (args[1] && *args[1]) {  len=strtol(args[1],NULL,0);  }
 			if (len<1)  len=1;
 			if (len > 1024*1024)  len=1024*1024;
-			if (adr < 0x80 || adr > 0xff) { 
+			if (adr < 0x80 || adr > 0xff) {
 				fprintf(stderr,"Command 'dsfr': Address out of range(0x80-0xff).\n");
-				++errors; 
+				++errors;
 			} else {
 				if (adr + len > 0x100) { len = 0x100 - adr; };
 			
@@ -959,7 +959,7 @@ int main(int argc, char *argv[])
 			if (args[0] && *args[0]) {  pc = strtol(args[0],NULL,0);  }
 			if (pc < 0 || pc > 0xffff) {
 				fprintf(stderr,"Command 'setpc': Value out of range(0x0-0xffff).\n");
-				++errors; 
+				++errors;
 			} else {
 				fprintf(stderr, "Setting program counter to 0x%.4hx\n", pc);
 				if (si4010_pc_set(pc) != 0) {
@@ -974,10 +974,10 @@ int main(int argc, char *argv[])
 			if (args[1] && *args[1])  {  bp = strtol(args[1],NULL,0);  }
 			if (adr < 0 || adr > 0xffff) {
 				fprintf(stderr,"Command 'break': Address out of range(0-0xffff).\n");
-				++errors; 
-			} else if (bp < 0 || bp > 7) { 
+				++errors;
+			} else if (bp < 0 || bp > 7) {
 				fprintf(stderr,"Command 'break': NR out of range(0-7).\n");
-				++errors; 
+				++errors;
 			} else {
 				//TODO: check return value
 				si4010_bp_set(bp, adr);
@@ -986,9 +986,9 @@ int main(int argc, char *argv[])
 			int bp=0;
 			if (args[0] && *args[0]) {
 				bp = strtol(args[0], NULL, 0);
-				if (bp < 0 || bp > 7) { 
+				if (bp < 0 || bp > 7) {
 					fprintf(stderr,"Command 'break': NR out of range(0-7).\n");
-					++errors; 
+					++errors;
 				} else {
 					//TODO: check return value
 					si4010_bp_clear(bp);
@@ -1010,7 +1010,7 @@ int main(int argc, char *argv[])
 			usleep(delay * 1000);
 		} else {
 			fprintf(stderr, "Command '%s': Unknown command\n", cmd);
-			++errors; 
+			++errors;
 		}
 		optind++;
 	}

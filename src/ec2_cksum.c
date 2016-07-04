@@ -8,20 +8,20 @@
 #include "ec2_cksum.h"
 
 uint16_t boot_local_calc_page_cksum(uint8_t *data)
-{ 
-	int i,j; 
+{
+	int i,j;
 	uint16_t cksum = 0;
- 
-	for(i = 0; i<512; i++) 
-	{ 
-		cksum ^= (uint16_t)data[i] << 8; 
- 
-		for(j = 0; j < 8; j++) 
-		{ 
-			cksum <<= 1; 
-			if(cksum & 0x8000) cksum ^= 0x1021; 
-		}; 
-	}; 
- 
-	return cksum; 
+
+	for(i = 0; i<512; i++)
+	{
+		cksum ^= (uint16_t)data[i] << 8;
+
+		for(j = 0; j < 8; j++)
+		{
+			cksum <<= 1;
+			if(cksum & 0x8000) cksum ^= 0x1021;
+		};
+	};
+
+	return cksum;
 }

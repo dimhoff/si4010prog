@@ -44,13 +44,13 @@
 
 #define USB_TIMEOUT 5000 // 5 sec?
 
-enum CmdOpcodes { 
-        CmdReset, 
-        CmdQReset, 
-        CmdReadAddr, 
-        CmdWriteAddr, 
-        CmdReadData, 
-        CmdWriteData 
+enum CmdOpcodes {
+        CmdReset,
+        CmdQReset,
+        CmdReadAddr,
+        CmdWriteAddr,
+        CmdReadData,
+        CmdWriteData
 };
 
 struct c2_bus_fx2_ctx {
@@ -98,7 +98,7 @@ static struct usb_device * locate_fx2(const char *path)
 					return dev;
 				}
 			} else if (dev->descriptor.idVendor == VID &&
-				   (dev->descriptor.idProduct == PID 
+				   (dev->descriptor.idProduct == PID
 				   ))
 			{
 				return dev;

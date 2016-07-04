@@ -79,7 +79,7 @@ uint16_t update_crc16_ccitt(uint16_t crc, uint8_t val)
 			crc <<= 1;
 		}
         }
- 
+
         return crc;
 }
 

@@ -50,7 +50,7 @@ struct c2_bus_ops {
  * Set error message in C2 bus context
  */
 void c2_bus_set_error(struct c2_bus *bus, const char *msg);
- 
+
 /**
  * Set error message + system error in C2 bus context
  *
