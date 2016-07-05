@@ -505,12 +505,28 @@ int c2_init(void)
 {
   int err;
 
+  err = gpio_request(gpio_c2ck, "c2_clock");
+  if (err) {
+    printk (KERN_ERR C2_MODULE_NAME
+       ": Failed to request GPIO %d for C2 clock (rc: %d)\n",
+        gpio_c2ck, err);
+    goto bad;
+  }
+
+  err = gpio_request(gpio_c2d, "c2_data");
+  if (err) {
+    printk (KERN_ERR C2_MODULE_NAME
+       ": Failed to request GPIO %d for C2 data (rc: %d)\n",
+        gpio_c2d, err);
+    goto bad1;
+  }
+
   err = misc_register(&c2_miscdev);
   if (err) {
     printk (KERN_ERR C2_MODULE_NAME
        ": Failed to register misc device (rc: %d)\n",
         err);
-    return err;
+    goto bad2;
   }
 
   printk(KERN_INFO C2_MODULE_NAME
@@ -518,6 +534,13 @@ int c2_init(void)
       c2_miscdev.minor);
 
   return 0;
+
+bad2:
+  gpio_free(gpio_c2d);
+bad1:
+  gpio_free(gpio_c2ck);
+bad:
+  return err;
 }
 
 /* Cleanup when removing the module */
@@ -529,6 +552,8 @@ void c2_exit(void)
   }
 #endif
   misc_deregister(&c2_miscdev);
+  gpio_free(gpio_c2d);
+  gpio_free(gpio_c2ck);
 }
 
 module_init(c2_init);
