@@ -1,0 +1,5 @@
+# si4010prog C2_GPIO driver
+# Install this file into /etc/udev/rules.d to allow running si4010prog as normal user
+#
+
+KERNEL=="c2_bus", MODE="0666"
