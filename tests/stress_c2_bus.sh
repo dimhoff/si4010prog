@@ -30,7 +30,7 @@ while true; do
 		exit 1
 	fi
 
-	RESULT=`cat "$TMPFILE" | cut -d ' ' -f 4-5 | tr -d ' '`
+	RESULT=`cat "$TMPFILE" | cut -d ' ' -f 2-3 | tr -d ' '`
 	if [ X"$RESULT" != X"$TESTVAL" ]; then
 		echo "Mismatch!"
 		echo "Output:"
