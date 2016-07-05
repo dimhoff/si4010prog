@@ -1,0 +1,7 @@
+.c2_gpio.ko.cmd
+.c2_gpio.mod.o.cmd
+.c2_gpio.o.cmd
+.tmp_versions/
+Module.symvers
+c2_gpio.mod.c
+modules.order
