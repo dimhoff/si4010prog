@@ -7,6 +7,9 @@ C2 master. The software is controlled through the FX2 USB interface.
 To utilize the C2 Bus master from the host PC use the functions provided in
 ../../src/c2_hw_fx2.c.
 
+**NOTE:** Make sure to blacklist the 'usbtest' Linux kernel module. Else it
+will claim the device.
+
 Wiring
 ------
 You have to make the following connections between the SI4010 and the FX2:

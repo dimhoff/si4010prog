@@ -33,7 +33,7 @@ The device URI can have one of the following formats:
    First device with given vendor id, product id and serial string
 
 Some examples:
- * "ftdi://i:0x0403:0x6014" uses the first FT232H device found. This is the
+ * "ft232://i:0x0403:0x6014" uses the first FT232H device found. This is the
    default
  * "ft232://i:0x0403:0x6014:2" use the third FT232H device connected
  * "ft232://d:003/006" use USB device 6 on bus 3
