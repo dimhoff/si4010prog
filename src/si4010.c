@@ -62,19 +62,19 @@
 #define RESUME_EXEC 0x08        // resume code execution
 
 // FPDAT commands
-#define UNKNOWN1     0x01
-#define UNKNOWN2     0x02
-#define DEVICE_ERASE 0x03 // TODO: check on SI4010
-#define FLASH_READ   0x06 // TODO: check on SI4010
-#define FLASH_WRITE  0x07 // TODO: check on SI4010
-#define PAGE_ERASE   0x08 // TODO: check on SI4010
-#define REG_READ     0x09
-#define REG_WRITE    0x0A
-#define RAM_READ     0x0B
-#define RAM_WRITE    0x0C
-#define UNKNOWN3     0x0D
-#define XRAM_READ    0x0E
-#define XRAM_WRITE   0x0F
+#define GET_VERSION    0x01
+#define GET_DERIVATIVE 0x02
+#define DEVICE_ERASE   0x03 // TODO: check on SI4010
+#define FLASH_READ     0x06 // TODO: check on SI4010
+#define FLASH_WRITE    0x07 // TODO: check on SI4010
+#define PAGE_ERASE     0x08 // TODO: check on SI4010
+#define DIRECT_READ    0x09
+#define DIRECT_WRITE   0x0A
+#define INDIRECT_READ  0x0B
+#define INDIRECT_WRITE 0x0C
+#define UNKNOWN3       0x0D
+#define XRAM_READ      0x0E
+#define XRAM_WRITE     0x0F
 
 // FPDAT status codes
 #define INVALID_COMMAND 0x00
@@ -296,7 +296,7 @@ int si4010_sfr_read(uint8_t addr, uint8_t len, void *buf)
 	// Reads a block of registers starting at BlockStart.
 	// Returns 0 if successful, 1 otherwise
 
-	C2_WriteReg(FPDAT, REG_READ);    // load the REG_READ command into FPDAT
+	C2_WriteReg(FPDAT, DIRECT_READ); // load the DIRECT_READ command into FPDAT
 	WaitForInReady();                // Wait for input acknowledge
 
 	// Check status before starting register access sequence
@@ -320,7 +320,7 @@ int si4010_sfr_write(uint8_t addr, uint8_t len, const void *buf)
 {
 	uint8_t *bbuf = (uint8_t *) buf;
 
-	C2_WriteReg(FPDAT, REG_WRITE);
+	C2_WriteReg(FPDAT, DIRECT_WRITE);
 	WaitForInReady();
 
 	// Check status before starting register access sequence
@@ -344,7 +344,7 @@ int si4010_ram_read(uint8_t addr, uint8_t len, void *buf)
 {
 	uint8_t *bbuf = (uint8_t *) buf;
 
-	C2_WriteReg(FPDAT, RAM_READ);
+	C2_WriteReg(FPDAT, INDIRECT_READ);
 	WaitForInReady();
 
 	// Check status before starting RAM access sequence
@@ -368,7 +368,7 @@ int si4010_ram_write(uint8_t addr, uint8_t len, const void *buf)
 {
 	uint8_t *bbuf = (uint8_t *) buf;
 
-	C2_WriteReg(FPDAT, RAM_WRITE);
+	C2_WriteReg(FPDAT, INDIRECT_WRITE);
 	WaitForInReady();
 
 	// Check status before starting RAM access sequence
