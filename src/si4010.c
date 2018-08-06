@@ -57,7 +57,7 @@
 
 // FPCTL codes
 #define INIT_KEY1   0x02        // first key
-#define INIT_KEY2   0x04        // second key
+#define INIT_KEY2   0x04        // second key (halt core???)
 #define INIT_KEY3   0x01        // third key
 #define RESUME_EXEC 0x08        // resume code execution
 
@@ -82,10 +82,17 @@
 #define COMMAND_OK      0x0D
 
 // FPI Command Status (C2_ReadAddr) bit masks
-#define FLASHING       0x80   // this isn't on continuously during Device Erase
-#define BREAKPOINT_HIT 0x04   // after stopping due to a breakpoint, this stays on until the next RESUME_EXEC
-#define INBUSY         0x02
-#define OUTREADY       0x01
+#define FLBUSY         0x80   // This bit indicates when the EPROM or Flash is
+                              // busy completing an operation. This isn't on
+                              // continuously during Device Erase.
+#define EERROR         0x40   // This bit is set to 1 when the EPROM encounters an error.
+#define BREAKPOINT_HIT 0x04   // After stopping due to a breakpoint, this stays
+                              // on until the next RESUME_EXEC
+#define INBUSY         0x02   // This bit is set to 1 by the C2 Interface
+                              // following a write to FPDAT. It is cleared to 0
+                              // when the PI acknowledges the write to FPDAT.
+#define OUTREADY       0x01   // This bit is set to 1 by the PI when output
+                              // data is available in the FPDAT register.
 
 // The worst-case wait should be during a Flash Device Erase, which can take
 // up to 20ms per page.  For 16kB (which is the largest C2-based MCU as of
