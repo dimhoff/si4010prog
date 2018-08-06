@@ -46,6 +46,7 @@ void usage(const char *name)
 		"Options:\n"
 //TODO:		"  -b             Use binary output when dumping data\n"
 		"  -d <uri>       Programmer device to use. Use 'help' for help.\n"
+		"  -D             Output C2 Low Level debugging info\n"
 //TODO:		"  -q             Quiet\n"
 		"  -y             Answer 'Yes' to all questions, possibly destroying data\n"
 		"  -h             Print this help message\n"
@@ -526,7 +527,7 @@ int main(int argc, char *argv[])
 	bool ignore_errors = false;
 	struct c2_bus c2_bus_handle;
 
-	while ((opt = getopt(argc, argv, "d:yh")) != -1) {
+	while ((opt = getopt(argc, argv, "d:Dyh")) != -1) {
 		switch (opt) {
 		case 'd':
 			c2_bus_type = optarg;
@@ -544,6 +545,9 @@ int main(int argc, char *argv[])
 				*sep = '\0';
 				c2_bus_path = sep + 3;
 			}
+			break;
+		case 'D':
+			si4010_c2_debug(1);
 			break;
 		case 'y':
 			just_say_yes = true;

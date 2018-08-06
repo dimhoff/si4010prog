@@ -104,17 +104,24 @@
 static struct c2_bus *c2_bus_handle = NULL;  // handle to the c2 bus driver
 //TODO: use some kind of state object instead of global...
 
+static int c2_debug = 0; // if != 0, print low level debugging messages
+
 //TODO: make things static?
 //*************** bus access functions **************
 static inline uint8_t C2_ReadData(void)
 {
   unsigned char tmp;
   c2_bus_data_read(c2_bus_handle, &tmp, 1);
+
+  if (c2_debug) fprintf(stderr, "C2_ReadData: 0x%x\n", tmp);
+
   return (uint8_t)tmp;
 }
 
 static inline void C2_WriteData(uint8_t dat)
 {
+  if (c2_debug) fprintf(stderr, "C2_WriteData: 0x%x\n", dat);
+
   c2_bus_data_write(c2_bus_handle, &dat, 1);
 }
 
@@ -122,11 +129,24 @@ static inline uint8_t C2_ReadAddr(void)
 {
   unsigned char tmp;
   c2_bus_addr_read(c2_bus_handle, &tmp);
+
+  if (c2_debug) {
+    fprintf(stderr, "C2_ReadAddr: 0x%x (", tmp);
+    if (tmp & OUTREADY) fprintf(stderr, "OutReady ");
+    if (tmp & INBUSY) fprintf(stderr, "InBusy ");
+    if (tmp & BREAKPOINT_HIT) fprintf(stderr, "BreakpointHit ");
+    if (tmp & EERROR) fprintf(stderr, "EError ");
+    if (tmp & FLBUSY) fprintf(stderr, "FLBusy ");
+    fprintf(stderr, ")\n");
+  }
+
   return (uint8_t)tmp;
 }
 
 static inline void C2_WriteAddr(uint8_t addr)
 {
+  if (c2_debug) fprintf(stderr, "C2_WriteAddr: 0x%x\n", addr);
+
   c2_bus_addr_write(c2_bus_handle, addr);
 }
 
@@ -168,6 +188,11 @@ int si4010_init(struct c2_bus *bus)
 {
 	c2_bus_handle = bus;
 	return 0;
+}
+
+void si4010_c2_debug(int level)
+{
+  c2_debug = level;
 }
 
 uint16_t c2_get_chip_version()

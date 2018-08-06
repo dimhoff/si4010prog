@@ -32,6 +32,7 @@
 #define SI4010_MTP_SIZE  0x10
 
 int si4010_init(struct c2_bus *bus);
+void si4010_c2_debug(int level);
 uint16_t c2_get_chip_version();
 int si4010_reset();
 int si4010_halt();
