@@ -33,6 +33,9 @@ Known Issues
 - Issuing a halt command when micro controller already halted cause protocol
   break. This can only be fixed by doing a 'reset'.
 - Timing of official FT232R(L) chips is broken
+- MCU doesn't seem to halt after a C2 reset if device program level is 'user'
+  and the USER_CONT bit is set. In this case a 'reset identify' will work but
+  any other command fails. Workaround is to run: 'si4010 reset run halt'
 
 Usage Examples
 --------------
