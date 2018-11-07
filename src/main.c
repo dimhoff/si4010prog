@@ -81,6 +81,8 @@ void usage(const char *name)
 		"  cbreak:NR      Clear breakpoint number NR\n"
 		"  waitbreak      Resume 8051, and wait for breakpoint\n"
 		"  delay:NN       make a delay for NN msec\n"
+		"  serialnumber   Obtian uniq chip serial number.\n"
+		"		  WARNING: this resets, loads and executes code on the MCU and sets breakpoints\n"
 		"\n"
 		"Note: Currently the program has no way to detect if the MCU is running or\n"
 		"      halted. If MCU is not halted when running or vice versa the protocol will\n"
@@ -516,6 +518,56 @@ int si4010_nvm_read(uint16_t addr, uint16_t len, uint8_t *buf)
 	return 0;
 }
 
+#include "../firmware/dump_serial_number/dump_serial_number_generated.c"
+// Address in xram where firmware returns data
+#define DUMP_SERIAL_NUMBER_RETURN_ADDR sizeof(dump_serial_number_prog)
+
+/**
+ * Read uniq chip serial number
+ *
+ * Read the 32-bit uniq chip serial number. To be able to do this the MCU will
+ * be reset and a dumper firmware will be run to obtain the serial number.
+ *
+ * @param serial_nr	Pointer to return serial number in.
+ */
+int si4010_read_serial_number(uint32_t *serial_nr)
+{
+	if (si4010_reset() != 0) {
+		fprintf(stderr, "Unable to read serial number: Reset failed\n");
+		return 1;
+	}
+
+	if (si4010_xram_write(0, sizeof(dump_serial_number_prog), dump_serial_number_prog) != 0) {
+		fprintf(stderr, "Unable to read serial number: Could not write dumper program\n");
+		return 1;
+	}
+
+	if (si4010_bp_set(0, DUMP_SERIAL_NUMBER_BP_ADDR) != 0) {
+		fprintf(stderr, "Unable to read serial number: Could not set breakpoint\n");
+		return 1;
+	}
+
+	if (si4010_resume() != 0) {
+		fprintf(stderr, "Unable to read serial number: Could not resume execution\n");
+		return 1;
+	}
+
+	sleep(1);
+
+	if (si4010_xram_read(DUMP_SERIAL_NUMBER_RETURN_ADDR, sizeof(*serial_nr), serial_nr) != 0) {
+		fprintf(stderr, "Unable to read serial number: Could read dump header from XRAM\n");
+		return 1;
+	}
+	*serial_nr = ntohl(*serial_nr);
+
+	if (si4010_reset() != 0) {
+		fprintf(stderr, "WARNING: unable to reset MCU after reading serial number\n");
+	}
+
+	return 0;
+}
+
+
 int main(int argc, char *argv[])
 {
 	int opt;
@@ -948,6 +1000,24 @@ int main(int argc, char *argv[])
 						++errors;
 					}
 					free(buf);
+				}
+			}
+		} else if (!strcmp(cmd, "serialnumber")) {
+			fprintf(stderr, "Reading uniq chip serial number:\n");
+			if (! just_say_yes) {
+				char answer[2];
+				fprintf(stderr, "Reading serial number will overwrite the currently loaded program.\n");
+				fprintf(stderr, "Continue? (y/n) ");
+				if (fgets(answer, sizeof(answer), stdin) == NULL || answer[0] != 'y') {
+					abort = true;
+				}
+			}
+			if (! abort) {
+				uint32_t serial;
+				if (si4010_read_serial_number(&serial) == 0) {
+					printf("0x%08x\n", serial);
+				} else {
+					++errors;
 				}
 			}
 		} else if(!strcmp(cmd, "getpc")) {
