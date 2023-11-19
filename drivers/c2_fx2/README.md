@@ -20,3 +20,9 @@ You have to make the following connections between the SI4010 and the FX2:
     IOA.1 ----/\1K/\---- C2CLK(/GPIO5)
     IOA.2 ----/\1K/\---- C2DAT(/GPIO4)
       GND -------------- GND
+
+Load Firmware
+-------------
+To load the firmware to the SI4010 use cycfx2prog:
+
+    sudo cycfx2prog prg:c2prog.ihx run
