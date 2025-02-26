@@ -37,6 +37,19 @@ Some examples:
    default
  * "ft232://i:0x0403:0x6014:2" use the third FT232H device connected
  * "ft232://d:003/006" use USB device 6 on bus 3
+ * Connect a FT232RL to a Si4010-C2-GT, as shown above.
+
+   ```bash
+   si4010prog -d ft232://i:0x0403:0x6001 reset identify
+   ```
+   Output:
+   ```
+   Resetting SI4010
+   Device ID: 0x24; Revision ID: 0x02
+   ```
+
+   *This mode of communication is not stable and sometimes must be rerun
+   many times to achieve the expected result.*
 
 ## Device permissions
 By default only root has enough permissions to use the FT232 device. To allow
