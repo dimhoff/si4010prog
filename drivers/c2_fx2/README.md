@@ -23,6 +23,6 @@ You have to make the following connections between the SI4010 and the FX2:
 
 Load Firmware
 -------------
-To load the firmware to the SI4010 use cycfx2prog:
+To load the firmware to the FX2 use cycfx2prog:
 
     sudo cycfx2prog prg:c2prog.ihx run
